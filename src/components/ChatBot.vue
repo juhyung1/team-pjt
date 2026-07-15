@@ -6,9 +6,9 @@
       </svg>
     </button>
 
-    <div v-if="open" class="panel" role="dialog" aria-label="LocalHub 챗봇">
+    <div v-if="open" class="panel" role="dialog" aria-label="SeoulMate 챗봇">
       <div class="panel-header">
-        <div class="title">LocalHub 챗봇</div>
+        <div class="title">SeoulMate 챗봇</div>
         <button class="close" @click="open = false">✕</button>
       </div>
 
@@ -182,7 +182,7 @@ async function send() {
 
   let systemContent = ''
   if (refData) {
-    systemContent = `너는 서울 지역 정보 챗봇입니다. 아래 참고 데이터를 근거로 한국어로 친절하고 간결하게 답변하세요.\n\n참고 데이터:\n${refData}`
+    systemContent = `너는 서울 지역 관광 정보 챗봇입니다. 아래 참고 데이터를 근거로 한국어로 친절하고 간결하게 답변하세요.\n\n참고 데이터:\n${refData}`
   } else {
     systemContent = '참고 데이터 없음. 서울 관련 일반 정보로 답하되 추측은 피하라.'
   }

@@ -18,7 +18,7 @@ const messages = ref([
   {
     id: 1,
     role: "assistant",
-    content: "안녕하세요! LocalHub 지역 도우미예요. 😊",
+    content: "안녕하세요! SeoulMate 도우미예요. 😊",
   },
 ]);
 
@@ -103,7 +103,7 @@ function goWrite() {
     <section v-if="isOpen" class="chatbot__panel">
       <header class="chatbot__header">
         <div>
-          <p class="chatbot__title">지역 도우미</p>
+          <p class="chatbot__title">SeoulMate 도우미</p>
           <p class="chatbot__subtitle">공공데이터 + 주민 후기 기반</p>
         </div>
         <button class="chatbot__close" @click="toggle">✕</button>
@@ -247,6 +247,7 @@ function goWrite() {
             stroke-linejoin="round"
           />
         </svg>
+        
 
         <!-- 열려있을 때: 닫기(X) 아이콘 -->
         <svg
