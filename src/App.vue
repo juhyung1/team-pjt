@@ -1,3 +1,8 @@
+<script setup>
+/* no script logic required for static header/navigation */
+import ChatbotWidget from './components/chatbot/ChatbotWidget.vue'
+
+</script>
 <template>
   <header class="app-header">
     <div class="container header-inner">
@@ -14,11 +19,10 @@
       <router-view />
     </div>
   </main>
+  <ChatbotWidget />
 </template>
 
-<script setup>
-/* no script logic required for static header/navigation */
-</script>
+
 
 <style scoped>
 .app-header {

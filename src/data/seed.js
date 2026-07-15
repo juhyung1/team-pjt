@@ -1,0 +1,216 @@
+/** 지역 주민 TIP — 광고가 아닌 실제 거주 경험 기반 조언 */
+export const LOCAL_TIPS = [
+  { id: 1, placeId: 1, author: '성수동 9년차', residentYears: 9, content: '주말 오후는 정말 붐벼요. 평일 오전이나 주말이라면 오전 9시 전에 오세요. 사슴 먹이주기는 은근 줄이 깁니다.', likes: 214 },
+  { id: 2, placeId: 1, author: '뚝섬 토박이', residentYears: 15, content: '벚꽃 시즌(4월 초)엔 군마상 뒤쪽 산책로가 숨은 명당이에요. 다들 정문 쪽만 가서 여긴 한산해요.', likes: 187 },
+  { id: 3, placeId: 1, author: '서울숲러너', residentYears: 4, content: '여기까지 왔으면 성수동 카페거리도 걸어서 10분이니 꼭 같이 가보세요. 언더스탠드에비뉴 지나서 가는 길이 예뻐요.', likes: 142 },
+  { id: 4, placeId: 2, author: '성수 직장인', residentYears: 6, content: '인기 팝업은 오픈런이 기본이에요. 인스타에서 대기 예약 링크 먼저 확인하고 오세요. 평일 오전이 그나마 여유롭습니다.', likes: 231 },
+  { id: 5, placeId: 2, author: '연무장길 주민', residentYears: 3, content: '메인 거리 말고 연무장길 안쪽 골목이 진짜예요. 공장 사이사이 숨은 카페들이 훨씬 조용하고 좋아요.', likes: 168 },
+  { id: 6, placeId: 3, author: '서촌 20년', residentYears: 20, content: '수문장 교대의식(10시, 14시)에 맞춰 오면 훨씬 볼거리가 많아요. 야간개장 기간엔 무조건 예매 서두르세요.', likes: 302 },
+  { id: 7, placeId: 3, author: '광화문 출퇴근러', residentYears: 8, content: '경회루는 오후 역광이라 사진은 오전에 찍는 게 좋아요. 관람 후엔 서촌 쪽으로 나가면 조용한 밥집이 많습니다.', likes: 156 },
+  { id: 8, placeId: 4, author: '가회동 주민', residentYears: 12, content: '여긴 실제 사람이 사는 동네예요. 이른 아침이나 저녁엔 조용히 다녀주세요. 골목 사진은 8번 포토스팟이 제일 유명해요.', likes: 274 },
+  { id: 9, placeId: 5, author: '자양동 라이더', residentYears: 7, content: '자벌레 전망대는 해질녘이 최고예요. 편의점 라면은 강 바로 앞 야외 테이블에서 드세요. 그게 국룰입니다.', likes: 198 },
+  { id: 10, placeId: 6, author: '을지로 상인', residentYears: 11, content: '밤에 오세요. LED 장미정원은 해 지고 나서가 진짜고, 건물 곡면 조명도 야간이 훨씬 멋있어요.', likes: 165 },
+  { id: 11, placeId: 7, author: '종로 토박이', residentYears: 25, content: '유명한 집만 줄 서지 말고 안쪽 원단 골목 사이 노포도 가보세요. 빈대떡은 순희네 말고도 맛집 많아요.', likes: 244 },
+  { id: 12, placeId: 8, author: '해방촌 주민', residentYears: 5, content: '케이블카 줄이 길면 남산 둘레길로 걸어 올라가세요. 40분이면 충분하고 길이 잘 되어 있어요. 야경은 평일이 한산합니다.', likes: 133 },
+  { id: 13, placeId: 9, author: '익선동 카페사장', residentYears: 6, content: '주말 낮 12시~5시는 골목이 마비 수준이에요. 평일 오픈 직후나 저녁 8시 이후를 추천해요.', likes: 152 },
+  { id: 14, placeId: 10, author: '삼청동 주민', residentYears: 9, content: '수요일·토요일 야간개장 때 오면 한산하게 볼 수 있어요. 관람 후 삼청동길 따라 북촌까지 걷는 코스 추천.', likes: 121 },
+  { id: 15, placeId: 11, author: '망원동 6년차', residentYears: 6, content: '고로케는 오후에 가면 품절이에요. 시장 구경 후 망원한강공원까지 걸어가는 코스가 우리 동네 정석 코스입니다.', likes: 176 },
+  { id: 16, placeId: 12, author: '연남동 주민', residentYears: 8, content: '주말 잔디밭은 자리 경쟁이 치열해요. 돗자리는 초입 말고 세교실개천 방향 안쪽이 여유로워요.', likes: 149 },
+  { id: 17, placeId: 13, author: '잠실 주민', residentYears: 10, content: '일몰 1시간 전 입장이 꿀팁이에요. 낮 풍경, 노을, 야경을 한 번에 볼 수 있어요. 온라인 예매가 현장보다 싸요.', likes: 188 },
+  { id: 18, placeId: 14, author: '원서동 주민', residentYears: 14, content: '후원은 단풍철(10월 말~11월 초)이 절정인데 예매가 순식간에 마감돼요. 6일 전 오전 10시에 열리니 알람 맞추세요.', likes: 217 },
+  { id: 19, placeId: 15, author: '이촌동 15년', residentYears: 15, content: '노들섬 일몰 보고 넘어오는 코스가 좋아요. 잔디밭은 그늘이 적으니 여름엔 저녁에 오세요.', likes: 102 },
+  { id: 20, placeId: 16, author: '문래동 작가', residentYears: 7, content: '철공소는 평일 낮에 실제로 일하시는 곳이에요. 작업 중인 분들 촬영은 꼭 양해 구하고요. 골목은 밤 분위기가 진짜입니다.', likes: 158 },
+]
+
+const daysAgo = (n, hour = 12) => {
+  const d = new Date()
+  d.setDate(d.getDate() - n)
+  d.setHours(hour, Math.floor(Math.random() * 60), 0, 0)
+  return d.toISOString()
+}
+
+/** 커뮤니티 시드 게시글 (LocalStorage 첫 실행 시 주입) */
+export const SEED_POSTS = [
+  {
+    id: 1,
+    title: '성수동 팝업 3개 하루에 도는 동선 공유합니다',
+    content:
+      '이번 주 성수 팝업 러시라 동선 짜봤어요.\n\n1. 오전 10시 디올 성수 (오픈런 필수)\n2. 점심은 연무장길 안쪽 파스타집\n3. 오후 2시 무신사 테라스 팝업\n4. 4시쯤 서울숲 산책으로 마무리\n\n주말엔 대기가 2배라 평일 연차 쓰고 가는 걸 추천해요. 팝업 대기 앱 미리 깔아두세요.',
+    placeId: 2,
+    tags: ['팝업', '성수동', '데이트코스'],
+    author: '팝업헌터',
+    isLocal: false,
+    password: '1234',
+    createdAt: daysAgo(1, 10),
+    views: 482,
+    likes: 67,
+  },
+  {
+    id: 2,
+    title: '[주민] 서울숲 벚꽃 개화 상황 실시간 공유',
+    content:
+      '서울숲 바로 옆 사는 주민입니다. 오늘 아침 산책 기준으로 군마상 뒤쪽 산책로는 70% 개화, 정문 쪽은 이제 피기 시작했어요.\n\n이번 주말이 절정일 것 같습니다. 주차는 포기하시고 수인분당선 서울숲역 이용하세요. 4번 출구가 제일 가깝습니다.',
+    placeId: 1,
+    tags: ['벚꽃', '서울숲', '실시간'],
+    author: '뚝섬주민',
+    isLocal: true,
+    password: '1234',
+    createdAt: daysAgo(2, 8),
+    views: 891,
+    likes: 134,
+  },
+  {
+    id: 3,
+    title: '경복궁 야간개장 예매 성공 후기 + 꿀팁',
+    content:
+      '3번 실패하고 드디어 성공했네요.\n\n꿀팁 정리:\n- 예매 오픈 10분 전부터 로그인해두기\n- PC보다 모바일 앱이 서버가 빨랐음\n- 잔여석은 취소표가 당일 오전에 종종 풀림\n\n야간 경회루는 진짜 인생 야경이었습니다. 한복 입으면 무료입장이니 대여해서 가세요.',
+    placeId: 3,
+    tags: ['경복궁', '야간개장', '예매팁'],
+    author: '궁궐덕후',
+    isLocal: false,
+    password: '1234',
+    createdAt: daysAgo(3, 21),
+    views: 655,
+    likes: 89,
+  },
+  {
+    id: 4,
+    title: '[주민] 망원시장 오면 이 순서로 드세요',
+    content:
+      '망원동 6년차 주민의 공식 코스입니다.\n\n1. 고로케 (무조건 첫 방문, 오후엔 품절)\n2. 닭강정 작은 컵\n3. 칼국수 or 손만두로 마무리\n4. 후식은 시장 밖 망리단길 카페\n\n배부르면 망원한강공원까지 15분 걷기 코스 강추. 노을 시간 맞추면 완벽합니다.',
+    placeId: 11,
+    tags: ['망원시장', '먹방', '주민추천'],
+    author: '망원동사람',
+    isLocal: true,
+    password: '1234',
+    createdAt: daysAgo(4, 13),
+    views: 720,
+    likes: 112,
+  },
+  {
+    id: 5,
+    title: '연남동 경의선숲길 피크닉 준비물 리스트',
+    content:
+      '지난 주말 다녀와서 정리해요.\n\n필수: 돗자리(대여 가능하지만 줄 김), 물티슈, 쓰레기봉투\n추천: 블루투스 스피커는 소리 작게, 그늘막은 안쪽 구간만 설치 가능\n\n연남동 초입은 사람이 너무 많아서 세교실개천 방향으로 10분만 더 걸어가면 한적해요. 주민분들 말대로였습니다.',
+    placeId: 12,
+    tags: ['연남동', '피크닉', '준비물'],
+    author: '주말나들이',
+    isLocal: false,
+    password: '1234',
+    createdAt: daysAgo(5, 15),
+    views: 389,
+    likes: 45,
+  },
+  {
+    id: 6,
+    title: '[주민] 문래창작촌, 사진 찍기 전에 이것만 알아주세요',
+    content:
+      '문래동에서 작업실 하는 사람입니다. 요즘 방문객이 부쩍 늘었는데 몇 가지만 부탁드려요.\n\n- 철공소는 실제 일터예요. 작업 중인 분들 무단 촬영은 자제해주세요.\n- 골목이 좁아서 삼각대는 통행에 방해돼요.\n- 밤 골목 분위기가 진짜니까 저녁 방문 추천해요.\n\n서로 배려하면 오래오래 좋은 동네로 남을 수 있어요.',
+    placeId: 16,
+    tags: ['문래동', '매너', '주민목소리'],
+    author: '문래작가',
+    isLocal: true,
+    password: '1234',
+    createdAt: daysAgo(6, 18),
+    views: 534,
+    likes: 98,
+  },
+  {
+    id: 7,
+    title: '서울스카이 vs 남산타워 전망대 비교 후기',
+    content:
+      '둘 다 이번 달에 다녀와서 비교해봅니다.\n\n서울스카이: 높이 압도적, 유리바닥 스릴, 가격 비쌈, 잠실 상권 연계\n남산타워: 접근성 좋음, 둘레길 산책 겸용, 야경 각도는 여기가 더 서울다움\n\n첫 방문이면 남산, 특별한 날이면 서울스카이 추천합니다. 주민팁 보고 남산은 걸어 올라갔는데 생각보다 힘들지 않았어요.',
+    placeId: 13,
+    tags: ['전망대', '비교', '야경'],
+    author: '뷰맛집탐방',
+    isLocal: false,
+    password: '1234',
+    createdAt: daysAgo(7, 20),
+    views: 428,
+    likes: 53,
+  },
+  {
+    id: 8,
+    title: '광장시장 웨이팅 없이 먹는 시간대 정리',
+    content:
+      '근처 직장인이라 자주 갑니다. 결론부터: 평일 오후 3시~5시가 골든타임이에요.\n\n점심 피크(12~2시)와 저녁 피크(6시 이후) 사이 애매한 시간엔 유명한 집도 바로 앉을 수 있어요. 주말은... 그냥 각오하고 오세요. 관광객+현지인 다 몰립니다.',
+    placeId: 7,
+    tags: ['광장시장', '웨이팅', '시간대'],
+    author: '종로직장인',
+    isLocal: true,
+    password: '1234',
+    createdAt: daysAgo(8, 16),
+    views: 612,
+    likes: 71,
+  },
+  {
+    id: 9,
+    title: '창덕궁 후원 단풍 예매 드디어 성공! 관람 후기',
+    content:
+      '주민분 팁 보고 6일 전 오전 10시 알람 맞춰서 성공했습니다.\n\n해설사분 따라 90분 코스인데, 부용지 단풍은 말이 안 나오는 수준이에요. 사진보다 실물이 백배 낫습니다. 걷는 구간이 있으니 편한 신발 필수고, 물 챙겨가세요.\n\n이 커뮤니티 아니었으면 예매 방법도 몰랐을 듯. 감사합니다!',
+    placeId: 14,
+    tags: ['창덕궁', '단풍', '예매성공'],
+    author: '가을여행자',
+    isLocal: false,
+    password: '1234',
+    createdAt: daysAgo(9, 11),
+    views: 347,
+    likes: 62,
+  },
+  {
+    id: 10,
+    title: '[주민] 익선동 주말에 오시는 분들께',
+    content:
+      '익선동에서 카페 하는 사람입니다. 주말 낮 12시~5시는 골목이 정말 마비 수준이라 방문 경험이 안 좋으실 거예요.\n\n평일 오픈 직후(11시)나 저녁 8시 이후가 골목 분위기도 좋고 웨이팅도 거의 없습니다. 밤 조명 켜진 한옥 골목이 사실 익선동의 진짜 매력이에요.',
+    placeId: 9,
+    tags: ['익선동', '시간대', '주민추천'],
+    author: '익선동카페',
+    isLocal: true,
+    password: '1234',
+    createdAt: daysAgo(10, 9),
+    views: 458,
+    likes: 84,
+  },
+  {
+    id: 11,
+    title: 'DDP 밤에 처음 가봤는데 완전 다른 곳이네요',
+    content:
+      '낮에만 가봤다가 주민팁 보고 밤에 재방문했습니다. LED 장미정원 + 곡면 건물 야간 조명 조합이 진짜 SF 영화 세트장 같아요.\n\n을지로 노포에서 저녁 먹고 걸어가는 코스로 다녀왔는데 완벽했습니다. 사진은 장미정원 안쪽에서 건물 배경으로 찍는 게 제일 잘 나와요.',
+    placeId: 6,
+    tags: ['DDP', '야경', '재방문'],
+    author: '밤산책러',
+    isLocal: false,
+    password: '1234',
+    createdAt: daysAgo(11, 22),
+    views: 293,
+    likes: 38,
+  },
+  {
+    id: 12,
+    title: '북촌 조용히 즐기는 이른 아침 코스',
+    content:
+      '주민분들 글 보고 아침 7시 반에 갔습니다. 골목에 아무도 없어서 온전히 동네를 느낄 수 있었어요.\n\n코스: 안국역 → 계동길 카페(8시 오픈) → 8번 포토스팟 → 삼청동길 → 국립현대미술관\n\n관광지가 아니라 진짜 사는 동네를 걷는 기분이었습니다. 조용히 다니자는 주민분들 부탁, 다들 지켜주면 좋겠어요.',
+    placeId: 4,
+    tags: ['북촌', '아침', '조용한여행'],
+    author: '얼리버드',
+    isLocal: false,
+    password: '1234',
+    createdAt: daysAgo(12, 7),
+    views: 376,
+    likes: 57,
+  },
+]
+
+/** 인기 키워드 (Home / Dashboard 공용) */
+export const TRENDING_KEYWORDS = [
+  '벚꽃',
+  '팝업',
+  '야간개장',
+  '주민추천',
+  '피크닉',
+  '야경',
+  '웨이팅',
+  '데이트코스',
+  '먹방',
+  '조용한여행',
+]
