@@ -1,0 +1,107 @@
+/* Design tokens & reset */
+:root{
+  --color-primary: #3B82F6;
+  --color-primary-dark: #2563EB;
+  --color-bg: #F8FAFC;
+  --color-card-bg: #FFFFFF;
+  --color-text: #111827;
+  --color-muted: #6B7280;
+  --color-border: #E5E7EB;
+
+  /* 8px spacing scale */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+
+  --radius-1: 10px;
+  --radius-card: 16px;
+
+  --shadow-soft: 0 8px 20px rgba(17,24,39,0.03);
+}
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: 'Pretendard', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+  font-size: 16px;
+}
+
+/* Basic elements */
+a { color: inherit; text-decoration: none; }
+img, svg, video { max-width: 100%; height: auto; display: block; }
+button { font: inherit; }
+
+/* Layout container */
+.container{
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 24px; /* 3 * 8 */
+  padding-right: 24px;
+}
+
+/* Card */
+.card{
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-soft);
+  padding: var(--space-2);
+  color: var(--color-text);
+}
+
+/* Button */
+.btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: var(--radius-1);
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  cursor: pointer;
+  transition: background-color 160ms ease, transform 120ms ease;
+  box-shadow: none;
+}
+
+.btn:hover{ background: var(--color-primary-dark); }
+.btn:active{ transform: translateY(1px); }
+.btn:focus{ outline: 3px solid rgba(59,130,246,0.14); outline-offset: 2px; }
+
+/* Typography & spacing */
+h1, h2, h3 { margin: 0 0 var(--space-2) 0; color: var(--color-text); font-weight: 700; }
+p { margin: 0 0 var(--space-2) 0; color: var(--color-text); }
+.small, .muted { color: var(--color-muted); font-size: 0.9375rem; }
+
+/* Utilities for generous minimal spacing */
+.stack > * + * { margin-top: var(--space-2); }
+.row { display: flex; gap: var(--space-2); align-items: center; }
+
+/* Form elements (minimal) */
+input, textarea, select {
+  width: 100%;
+  padding: var(--space-1);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--color-text);
+}
+
+/* Small responsive tweaks */
+@media (max-width: 640px){
+  .container { padding-left: var(--space-2); padding-right: var(--space-2); }
+  .card { padding: var(--space-1); }
+}
