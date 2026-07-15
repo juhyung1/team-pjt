@@ -1,10 +1,3 @@
-
-<script setup>
-/* no script logic required for static header/navigation */
-import ChatbotWidget from './components/chatbot/ChatbotWidget.vue'
-
-</script>
-
 <template>
   <header class="app-header">
     <div class="container header-inner">
@@ -27,19 +20,20 @@ import ChatbotWidget from './components/chatbot/ChatbotWidget.vue'
       <router-view />
     </div>
   </main>
- <ChatbotWidget />
+  <ChatbotWidget />
   <WriteFab />
   <footer class="app-footer">
-    <div class="container">© {new Date().getFullYear()} SeoulMate — 서울 지역 정보 공유 커뮤니티</div>
+    <div class="container">
+      © {new Date().getFullYear()} SeoulMate — 서울 지역 정보 공유 커뮤니티
+    </div>
   </footer>
 </template>
 
 <script setup>
 /* no script logic required for static header/navigation */
-import ChatbotWidget from './components/chatbot/ChatbotWidget.vue'
-import WriteFab from './components/WriteFab.vue'
+import ChatbotWidget from "./components/chatbot/ChatbotWidget.vue";
+import WriteFab from "./components/WriteFab.vue";
 </script>
-
 
 <style scoped>
 .app-header {
@@ -55,8 +49,10 @@ import WriteFab from './components/WriteFab.vue'
 
 /* ensure main content sits below the header */
 
-
-main { padding-top: 16px; padding-bottom: 24px; }
+main {
+  padding-top: 16px;
+  padding-bottom: 24px;
+}
 
 /* inner header layout (uses global .container) */
 .header-inner {
@@ -68,14 +64,22 @@ main { padding-top: 16px; padding-bottom: 24px; }
 
 /* Logo */
 .logo {
-  display:flex;
-  align-items:center;
-  gap:8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   text-decoration: none;
   margin-right: var(--space-3);
 }
-.logo-img{ height:28px; width:auto }
-.logo-text{ color: var(--color-text); font-weight:700; font-size:1.125rem; line-height:1 }
+.logo-img {
+  height: 28px;
+  width: auto;
+}
+.logo-text {
+  color: var(--color-text);
+  font-weight: 700;
+  font-size: 1.125rem;
+  line-height: 1;
+}
 
 /* Navigation */
 .nav {
@@ -90,7 +94,9 @@ main { padding-top: 16px; padding-bottom: 24px; }
   padding: 8px 10px;
   border-radius: var(--radius-sm);
   font-weight: 500;
-  transition: color 120ms ease, background-color 120ms ease;
+  transition:
+    color 120ms ease,
+    background-color 120ms ease;
 }
 
 .nav-link:hover {
@@ -106,9 +112,19 @@ main { padding-top: 16px; padding-bottom: 24px; }
 
 /* small responsive tweak */
 @media (max-width: 640px) {
-  .logo { font-size: 1rem; }
-  .nav { gap: var(--space-1, 8px); }
+  .logo {
+    font-size: 1rem;
+  }
+  .nav {
+    gap: var(--space-1, 8px);
+  }
 }
 
-.app-footer { padding: 24px 0; border-top: 1px solid var(--color-border); color: var(--color-muted); text-align: center; font-size: 0.95rem }
+.app-footer {
+  padding: 24px 0;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-muted);
+  text-align: center;
+  font-size: 0.95rem;
+}
 </style>
