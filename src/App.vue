@@ -1,8 +1,10 @@
+
 <script setup>
 /* no script logic required for static header/navigation */
 import ChatbotWidget from './components/chatbot/ChatbotWidget.vue'
 
 </script>
+
 <template>
   <header class="app-header">
     <div class="container header-inner">
@@ -10,6 +12,7 @@ import ChatbotWidget from './components/chatbot/ChatbotWidget.vue'
       <nav class="nav">
         <router-link to="/board" class="nav-link">게시판</router-link>
         <router-link to="/write" class="nav-link">글쓰기</router-link>
+        <router-link to="/community" class="nav-link">DashBoard</router-link>
       </nav>
     </div>
   </header>
@@ -37,7 +40,8 @@ import ChatbotWidget from './components/chatbot/ChatbotWidget.vue'
 }
 
 /* ensure main content sits below the header */
-main { padding-top: 16px; }
+
+main { padding-top: 16px; padding-bottom: 24px; }
 
 /* inner header layout (uses global .container) */
 .header-inner {
