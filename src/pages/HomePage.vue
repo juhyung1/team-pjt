@@ -41,7 +41,6 @@ function formatDate(value: string) {
 
 <template>
   <div>
-    <h1>홈</h1>
 
     <section class="hero">
       <div class="container hero-inner">

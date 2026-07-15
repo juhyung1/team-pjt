@@ -5,6 +5,7 @@
       <nav class="nav">
         <router-link to="/board" class="nav-link">게시판</router-link>
         <router-link to="/write" class="nav-link">글쓰기</router-link>
+        <router-link to="/community" class="nav-link">DashBoard</router-link>
       </nav>
     </div>
   </header>
@@ -33,7 +34,7 @@
 }
 
 /* ensure main content sits below the header */
-main { padding-top: 16px; }
+main { padding-top: 16px; padding-bottom: 24px; }
 
 /* inner header layout (uses global .container) */
 .header-inner {
