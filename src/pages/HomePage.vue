@@ -114,9 +114,7 @@ function formatDate(value: string) {
             :key="post.id"
             class="post-row"
           >
-            <div class="post-title">
-              {{ post.title }}
-            </div>
+            <router-link :to="`/board/${post.id}`" class="post-title">{{ post.title }}</router-link>
 
             <div class="post-date">
               {{ formatDate(post.createdAt) }}

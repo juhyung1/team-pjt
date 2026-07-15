@@ -1,12 +1,15 @@
 /* Design tokens & reset */
 :root{
-  --color-primary: #3B82F6;
-  --color-primary-dark: #2563EB;
-  --color-bg: #F8FAFC;
-  --color-card-bg: #FFFFFF;
-  --color-text: #111827;
-  --color-muted: #6B7280;
-  --color-border: #E5E7EB;
+  /* Minimal restrained palette: use color only for primary CTA and danger */
+  --color-primary: #2563eb; /* CTA */
+  --color-primary-dark: #1e4fcf;
+  --color-bg: #ffffff; /* overall background kept neutral */
+  --color-surface: #ffffff;
+  --color-text: #0f1724;
+  --color-muted: #6b7280;
+  --color-border: #e6eef8; /* very subtle */
+  --color-muted-surface: #f6f7fb; /* subtle surfaces */
+  --color-danger: #dc2626;
 
   /* 8px spacing scale */
   --space-1: 8px;

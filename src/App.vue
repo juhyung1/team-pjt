@@ -14,10 +14,12 @@
       <router-view />
     </div>
   </main>
+  <ChatBot />
 </template>
 
 <script setup>
 /* no script logic required for static header/navigation */
+import ChatBot from './components/ChatBot.vue'
 </script>
 
 <style scoped>
