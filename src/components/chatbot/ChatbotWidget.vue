@@ -26,29 +26,50 @@ async function submit(text) {
   if (!message) return
 
   input.value = ''
-  messages.value.push({ id: Date.now(), role: 'user', content: message })
+
+  messages.value.push({
+    id: Date.now(),
+    role: 'user',
+    content: message,
+  })
+
   isLoading.value = true
 
   try {
-    const history = messages.value.slice(-6).map(({ role, content }) => ({ role, content }))
+    const history = messages.value
+      .slice(-6)
+      .map(({ role, content }) => ({
+        role,
+        content: typeof content === 'object'
+          ? content.answer
+          : content,
+      }))
+
+
     const answer = await askChatbot(message, history)
+
 
     messages.value.push({
       id: Date.now() + 1,
       role: 'assistant',
-      content: answer,
+      content: typeof answer === 'object'
+        ? answer.answer
+        : answer,
     })
+
   } catch (error) {
+    console.error(error)
+
     messages.value.push({
       id: Date.now() + 1,
       role: 'assistant',
       content: '답변 생성 중 문제가 발생했어요.',
     })
+
   } finally {
     isLoading.value = false
   }
 }
-
 watch(
   () => [messages.value.length, isLoading.value],
   async () => {
@@ -68,7 +89,7 @@ onBeforeUnmount(() => {
       <header class="chatbot__header">
         <div>
           <p class="chatbot__title">지역 도우미</p>
-          <p class="chatbot__subtitle">간단한 데모 챗봇</p>
+          <p class="chatbot__subtitle">공공데이터 + 주민 후기 기반</p>
         </div>
         <button class="chatbot__close" @click="toggle">✕</button>
       </header>
@@ -183,18 +204,26 @@ onBeforeUnmount(() => {
   right: 24px;
   bottom: 96px;
   z-index: 2001;
+
   width: 320px;
   max-width: calc(100vw - 32px);
+
   height: 460px;
+  min-height: 300px;
+  max-height: calc(100vh - 120px);
+
   display: flex;
   flex-direction: column;
+
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.16);
+
+  resize: vertical;
   overflow: hidden;
+
   animation: panel-up 0.2s ease;
 }
-
 .chatbot__header {
   display: flex;
   justify-content: space-between;
@@ -208,6 +237,10 @@ onBeforeUnmount(() => {
   overflow-y: auto;
   padding: 12px;
   background: var(--color-bg);
+}
+.chatbot__subtitle {
+  font-size: 14px;
+  color: #808080;
 }
 
 .chatbot__msg {

@@ -237,15 +237,21 @@ ${contextText}
 
   if (!res.ok) throw new Error(`OpenAI API 오류: ${res.status}`)
   const data = await res.json()
-  const content = data.choices[0].message.content
-  try{
-    return JSON.parse(content)
+   const content = data.choices[0].message.content
+
+ try {
+  const clean = content
+    .replace(/```json/g, '')
+    .replace(/```/g, '')
+    .trim()
+
+  return JSON.parse(clean)
+
 } catch {
-    return {
-        answer: content,
-        suggestions: [],
-    }
-}
+  return {
+    answer: content,
+    suggestions: [],
+  }
 }
 
 /** 로컬 폴백 — 같은 컨텍스트로 규칙 기반 답변 */
