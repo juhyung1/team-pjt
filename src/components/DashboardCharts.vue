@@ -50,21 +50,8 @@ function computeTopPlaces() {
   const arr = Array.from(counts.entries()).map(([name, count]) => ({ name, count }))
   arr.sort((a, b) => b.count - a.count)
 
-  // Ensure we always show 8 items: if fewer matches, pad with known attraction titles with count 0
-  const result = arr.slice(0, 8)
-  if (result.length < 8) {
-    // iterate titles (original order) and add missing ones
-    for (const t of titles) {
-      if (result.find((r) => r.name === t)) continue
-      result.push({ name: t, count: 0 })
-      if (result.length >= 8) break
-    }
-  }
-
-  topPlaces.value = result
-  // debug: show computed topPlaces
-  // eslint-disable-next-line no-console
-  console.log('computeTopPlaces -> topPlaces', topPlaces.value)
+  // 실제로 언급된 장소만 표시 (0회 장소로 채우면 순위가 왜곡됨)
+  topPlaces.value = arr.slice(0, 8)
 }
 
 function extractDistrictFromText(text: string) {
@@ -126,9 +113,6 @@ function computeRegionCounts() {
     .forEach(([k, v]) => { filtered[k] = v })
 
   regionCounts.value = filtered
-  // debug: show computed region counts
-  // eslint-disable-next-line no-console
-  console.log('computeRegionCounts -> regionCounts', regionCounts.value)
 }
 
 const stopwords = ['의','가','이','은','는','에','다','도','을','를','으로','하고','에서','하다','있다','좋아요','좋다','많다']
@@ -255,23 +239,25 @@ watch(posts, () => {
   <div class="dashboard-charts-wrap">
     <div class="header-row">
       <h3>가장 많이 언급된 장소 TOP 8</h3>
-      <p class="muted">게시글 수와 조회수를 합산한 언급 지수예요.</p>
+      <p class="muted">게시글 제목·본문에서 장소가 언급된 횟수 기준이에요.</p>
     </div>
 
     <div class="grid-two">
       <section class="card large-card">
-        <div class="chart-area"><canvas ref="barChartRef"></canvas></div>
+        <div v-show="topPlaces.length" class="chart-area"><canvas ref="barChartRef"></canvas></div>
+        <p v-if="!topPlaces.length" class="no-data muted">아직 게시글에서 언급된 장소가 없어요.</p>
       </section>
 
       <aside class="card small-card">
         <h4>게시글 많은 지역</h4>
         <p class="muted">자치구별 게시글 비중</p>
-        <div class="donut-wrap"><canvas ref="donutChartRef"></canvas></div>
+        <div v-show="Object.keys(regionCounts).length" class="donut-wrap"><canvas ref="donutChartRef"></canvas></div>
+        <p v-if="!Object.keys(regionCounts).length" class="no-data muted">장소가 연결된 게시글이 쌓이면 표시돼요.</p>
       </aside>
     </div>
 
     <section class="card keywords-card" style="margin-top:16px;">
-      <h4>인기 키워드 TOP10</h4>
+      <h4>인기 키워드 TOP5</h4>
       <p class="muted">게시글 제목/본문에서 많이 언급된 키워드입니다.</p>
       <div style="height:260px; margin-top:12px;"><canvas ref="keywordChartRef"></canvas></div>
     </section>
@@ -280,9 +266,10 @@ watch(posts, () => {
 
 <style scoped>
 .header-row { margin-bottom:12px }
-.muted { color:#6b7280; font-size:13px }
+.muted { color:var(--color-muted); font-size:13px }
+.no-data { padding:24px 0; text-align:center }
 .grid-two { display:grid; grid-template-columns:2fr 1fr; gap:18px }
-.card { background:#fff; border:1px solid #e6edf3; border-radius:12px; padding:16px }
+.card { background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:16px }
 .chart-area { height:420px }
 .donut-wrap { height:220px; display:flex; align-items:center; justify-content:center }
 .card.small-card { display:flex; flex-direction:column; align-items:stretch; padding-bottom: 16px }

@@ -1,19 +1,22 @@
 <script setup>
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { askChatbot } from '../../services/chatService'
+import { isChatbotOpen } from '../../composables/uiState'
 
-const isOpen = ref(false)
+// 전역 공유 상태 — 글쓰기 FAB이 대화창 위로 밀려나는 연출에 사용
+const isOpen = isChatbotOpen
 const input = ref('')
 const bodyEl = ref(null)
 const isLoading = ref(false)
 
-const suggestions = ['성수동 후기 알려줘', '서울숲 주민 추천 있어?', '요즘 인기 장소는?']
+const DEFAULT_SUGGESTIONS = ['경복궁 야간개장 후기 알려줘', '서울숲 주민 추천 있어?', '요즘 인기 장소는?']
+const suggestions = ref([...DEFAULT_SUGGESTIONS])
 
 const messages = ref([
   {
     id: 1,
     role: 'assistant',
-    content: '안녕하세요! LocalHub 지역 도우미예요. 😊',
+    content: '안녕하세요! SeoulMate 지역 도우미예요. 😊\n서울 관광지·주민 팁·커뮤니티 글을 기반으로 답해드려요.',
   },
 ])
 
@@ -23,26 +26,34 @@ function toggle() {
 
 async function submit(text) {
   const message = (text ?? input.value).trim()
-  if (!message) return
+  if (!message || isLoading.value) return
 
   input.value = ''
+  suggestions.value = []
   messages.value.push({ id: Date.now(), role: 'user', content: message })
   isLoading.value = true
 
   try {
     const history = messages.value.slice(-6).map(({ role, content }) => ({ role, content }))
-    const answer = await askChatbot(message, history)
+    const result = await askChatbot(message, history)
+
+    // 문자열 또는 { answer, suggestions } 객체 모두 안전하게 처리
+    const answer = typeof result === 'string' ? result : String(result?.answer ?? '')
+    const next = result && typeof result === 'object' && Array.isArray(result.suggestions)
+      ? result.suggestions
+      : []
 
     messages.value.push({
       id: Date.now() + 1,
       role: 'assistant',
-      content: answer,
+      content: answer || '답변을 가져오지 못했어요. 다시 시도해주세요.',
     })
+    suggestions.value = next.slice(0, 3)
   } catch (error) {
     messages.value.push({
       id: Date.now() + 1,
       role: 'assistant',
-      content: '답변 생성 중 문제가 발생했어요.',
+      content: '답변 생성 중 문제가 발생했어요. 잠시 후 다시 시도해주세요.',
     })
   } finally {
     isLoading.value = false
@@ -68,9 +79,9 @@ onBeforeUnmount(() => {
       <header class="chatbot__header">
         <div>
           <p class="chatbot__title">지역 도우미</p>
-          <p class="chatbot__subtitle">간단한 데모 챗봇</p>
+          <p class="chatbot__subtitle">서울 공공데이터 · 커뮤니티 기반 답변</p>
         </div>
-        <button class="chatbot__close" @click="toggle">✕</button>
+        <button class="chatbot__close" type="button" aria-label="챗봇 닫기" @click="toggle">✕</button>
       </header>
 
       <div ref="bodyEl" class="chatbot__body">
@@ -92,7 +103,7 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-      <div v-if="messages.length <= 1" class="chatbot__suggestions">
+      <div v-if="suggestions.length && !isLoading" class="chatbot__suggestions">
         <button
           v-for="s in suggestions"
           :key="s"
@@ -105,7 +116,7 @@ onBeforeUnmount(() => {
 
       <form class="chatbot__input-row" @submit.prevent="submit()">
         <input v-model="input" class="chatbot__input" placeholder="메시지를 입력하세요" />
-        <button type="submit" class="btn">전송</button>
+        <button type="submit" class="btn" :disabled="isLoading">전송</button>
       </form>
     </section>
 
@@ -152,11 +163,13 @@ onBeforeUnmount(() => {
   color: #fff;
   cursor: pointer;
   font-size: 22px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-lg);
-  transition: transform var(--duration-fast) var(--ease-out),
-    background var(--duration-fast) var(--ease-out);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+  transition:
+    transform 160ms ease,
+    background 160ms ease;
 }
 
 .chatbot__fab:hover {
@@ -188,11 +201,25 @@ onBeforeUnmount(() => {
   height: 460px;
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 16px;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.16);
   overflow: hidden;
   animation: panel-up 0.2s ease;
+}
+
+/* 모바일: 전체 화면 대화창 (의뢰서 화면 구성 ⑤) */
+@media (max-width: 640px) {
+  .chatbot__panel {
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    border-radius: 0;
+  }
+  .chatbot__fab--open {
+    display: none; /* 전체 화면일 땐 헤더의 ✕ 버튼으로 닫기 */
+  }
 }
 
 .chatbot__header {
@@ -201,6 +228,17 @@ onBeforeUnmount(() => {
   align-items: center;
   padding: 12px 14px;
   border-bottom: 1px solid var(--color-border);
+}
+
+.chatbot__title {
+  font-weight: 800;
+  margin: 0;
+}
+
+.chatbot__subtitle {
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  margin: 2px 0 0;
 }
 
 .chatbot__body {

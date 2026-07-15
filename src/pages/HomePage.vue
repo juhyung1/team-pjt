@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import seoulData from '../data/seoul_attractions.json'
-import HomeTrends from '../components/HomeTrends.vue'
+import LocalTips from '../components/LocalTips.vue'
 
 const posts = ref([])
 
@@ -17,6 +17,8 @@ const popularPlaces = computed(() => {
   const items = Array.isArray(seoulData?.items) ? seoulData.items : []
   return items.filter(p => p?.firstimage).slice(0, 8)
 })
+
+const heroPlace = computed(() => popularPlaces.value[0] || null)
 
 // favorites
 const favorites = ref([])
@@ -69,7 +71,7 @@ const topPlaces4 = (()=>{
   return arr.slice(0,4)
 })()
 
-const popularPosts5 = computed(()=> posts.value.slice().sort((a,b)=> (b.views + (b.likes||0)*3) - (a.views + (a.likes||0)*3)).slice(0,5))
+const popularPosts5 = computed(()=> posts.value.slice().sort((a,b)=> (Number(b.views||0) + Number(b.likes||0)*3) - (Number(a.views||0) + Number(a.likes||0)*3)).slice(0,5))
 
 function formatDate(value) {
   const date = new Date(value)
@@ -84,20 +86,27 @@ function formatDate(value) {
 
 <template>
   <div>
-    <section class="hero">
+    <section
+      class="hero"
+      :style="heroPlace?.firstimage ? { backgroundImage: `linear-gradient(90deg, rgba(15, 23, 36, 0.82), rgba(15, 23, 36, 0.34)), url(${heroPlace.firstimage})` } : {}"
+    >
       <div class="container hero-inner">
         <div class="hero-label">
-          지역 정보 공유 커뮤니티
+          서울 권역 지역 정보 공유 커뮤니티
         </div>
 
         <h1 class="hero-title">
-          지역 주민의 경험이<br />
-          방문자의 선택이 됩니다
+          SeoulMate 서울
         </h1>
 
         <p class="hero-desc">
-          이 곳에서 지역 주민들이 추천하는 장소와 이야기를 찾아보세요.
+          공공데이터 장소 정보와 주민 후기를 한 곳에서 탐색하고, 익명으로 지역 이야기를 남겨보세요.
         </p>
+
+        <div class="hero-actions" aria-label="주요 이동">
+          <router-link to="/explore" class="btn">서울 장소 둘러보기</router-link>
+          <router-link to="/board" class="btn btn-secondary">커뮤니티 글 보기</router-link>
+        </div>
       </div>
     </section>
 
@@ -106,15 +115,15 @@ function formatDate(value) {
       <h2 class="section-title">지금 뜨는 장소</h2>
       <div class="places-grid">
         <article v-for="(p, idx) in topPlaces4" :key="p.contentid" class="place-rank-card">
-          <div class="media-wrap">
+          <router-link :to="`/explore/${p.contentid}`" class="media-wrap" :aria-label="`${p.title} 상세 보기`">
             <img v-if="p.firstimage" :src="p.firstimage" :alt="p.title" class="media-img" />
             <div v-else class="media-placeholder">{{ p.title }}</div>
             <span class="badge" :class="{ top: idx===0 }">{{ idx+1 }}</span>
-          </div>
+          </router-link>
 
           <div class="place-info">
             <div class="place-name-and-star">
-              <div class="place-name" title="">{{ p.title }}</div>
+              <router-link :to="`/explore/${p.contentid}`" class="place-name" :title="p.title">{{ p.title }}</router-link>
 
               <!-- star on the right, fixed area -->
               <button class="star-right" :class="{ on: isFav(p.contentid) }" @click.stop="toggleFavWithToast(p.contentid)" aria-label="즐겨찾기">
@@ -141,7 +150,7 @@ function formatDate(value) {
       </div>
 
       <div class="card popular-posts">
-        <ul class="pop-list">
+        <ul v-if="popularPosts5.length" class="pop-list">
           <li v-for="p in popularPosts5" :key="p.id" class="pop-item">
             <router-link :to="`/board/${p.id}`" class="pop-link">
               <div class="pop-title">{{ p.title }}</div>
@@ -150,6 +159,9 @@ function formatDate(value) {
             </router-link>
           </li>
         </ul>
+        <div v-else class="empty-state">
+          아직 게시글이 없어요. 서울의 첫 지역 이야기를 남겨보세요.
+        </div>
       </div>
     </section>
 
@@ -157,9 +169,10 @@ function formatDate(value) {
     <section class="container section">
       <h2 class="section-title">더 둘러보기 <router-link to="/explore" class="explore-link">전체 보기 →</router-link></h2>
       <div class="grid">
-        <article
+        <router-link
           v-for="place in popularPlaces"
           :key="place.contentid"
+          :to="`/explore/${place.contentid}`"
           class="card place-card"
         >
           <div
@@ -186,13 +199,13 @@ function formatDate(value) {
               {{ place.addr1 }}
             </div>
           </div>
-        </article>
+        </router-link>
       </div>
       </section>
 
       <!-- community stats (moved to bottom) -->
       <section class="container section">
-        <HomeTrends />
+        <LocalTips />
       </section>
 
     <!-- toast -->
@@ -203,19 +216,23 @@ function formatDate(value) {
 
 <style scoped>
 .hero {
-  background: var(--color-bg);
-  padding: 80px 0;
-  color: var(--color-text);
+  background-color: var(--color-text);
+  background-position: center;
+  background-size: cover;
+  border-radius: var(--radius-md);
+  color: #fff;
+  margin-top: 12px;
+  min-height: 360px;
+  padding: 72px 0;
 }
 .hero-inner {
-  text-align: center;
+  text-align: left;
   max-width: 900px;
-  margin: 0 auto;
 }
 .hero-label {
   display: inline-block;
-  background: rgba(37,99,235,0.08);
-  color: var(--color-primary);
+  background: rgba(255,255,255,0.16);
+  color: #fff;
   font-weight: 600;
   padding: 6px 10px;
   border-radius: var(--radius-full);
@@ -227,10 +244,25 @@ function formatDate(value) {
   line-height: 1.05;
   margin: 12px 0;
   font-weight: 800;
+  color: #fff;
 }
 .hero-desc {
-  color: var(--color-muted);
+  color: rgba(255,255,255,0.88);
   margin: 0;
+  max-width: 620px;
+}
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+.btn-secondary {
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.38);
+}
+.btn-secondary:hover {
+  background: rgba(255,255,255,0.22);
 }
 
 /* Sections */
@@ -271,6 +303,7 @@ function formatDate(value) {
 }
 .media-wrap {
   position: relative;
+  display: block;
   height: 200px;
   overflow: hidden;
 }
@@ -328,6 +361,11 @@ function formatDate(value) {
   text-overflow: ellipsis;
   margin-right: 12px;
   font-size: 16px;
+  color: inherit;
+  text-decoration: none;
+}
+.place-name:hover {
+  color: var(--color-primary);
 }
 .star-right {
   width: 32px;
@@ -353,6 +391,11 @@ function formatDate(value) {
 
 /* Popular posts list */
 .popular-posts { margin-top: 8px; }
+.empty-state {
+  color: var(--color-muted);
+  padding: 20px;
+  text-align: center;
+}
 .pop-list { list-style: none; padding: 0; margin: 0; }
 .pop-item {
   display: block;
@@ -398,6 +441,8 @@ function formatDate(value) {
 
 .place-card {
   transition: transform 180ms ease, box-shadow 180ms ease;
+  color: inherit;
+  text-decoration: none;
 }
 .place-card:hover {
   transform: translateY(-4px);
@@ -436,7 +481,21 @@ function formatDate(value) {
 
 /* responsive hero title */
 @media (max-width: 768px) {
+  .hero {
+    border-radius: 0;
+    margin-left: calc(var(--space-2) * -1);
+    margin-right: calc(var(--space-2) * -1);
+    min-height: 320px;
+    padding: 56px 0;
+  }
   .hero-title { font-size: 32px; }
+  .pop-link {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .pop-meta {
+    margin-left: 0;
+  }
   .toast { bottom: 96px; } /* avoid floating fab overlap on small screens */
 }
 </style>

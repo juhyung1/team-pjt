@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import TrendingAside from '../components/TrendingAside.vue'
 
@@ -20,17 +20,25 @@ function loadPosts() {
   }
 }
 
+function handleStorage(e) {
+  if (e.key === 'posts') loadPosts()
+}
+
 onMounted(() => {
   loadPosts()
-  // update when storage changes in other tabs
-  window.addEventListener('storage', (e) => {
-    if (e.key === 'posts') loadPosts()
-  })
+  window.addEventListener('storage', handleStorage)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('storage', handleStorage)
 })
 
 const filtered = computed(() => {
   const q = searchTerm.value.trim().toLowerCase()
-  const list = [...posts.value].sort((a, b) => Number(b.id) - Number(a.id))
+  const list = [...posts.value].sort((a, b) => {
+    const diff = new Date(b.createdAt ?? 0) - new Date(a.createdAt ?? 0)
+    return diff || Number(b.id) - Number(a.id)
+  })
   if (!q) return list
   return list.filter((p) => {
     const t = String(p.title ?? '').toLowerCase()
@@ -58,10 +66,6 @@ function formatMMDD(iso) {
   const mm = String(d.getMonth() + 1).padStart(2, '0')
   const dd = String(d.getDate()).padStart(2, '0')
   return `${mm}.${dd}`
-}
-
-function goWrite() {
-  router.push('/write')
 }
 
 function goDetail(id) {
@@ -93,8 +97,11 @@ function overallNumber(indexInPage) {
 <template>
   <div class="board-page">
     <div class="board-header">
-        <h1 class="page-title">게시판</h1>
-        <button class="btn write-btn" @click="goWrite">+ 글쓰기</button>
+      <div>
+        <p class="eyebrow">서울 권역</p>
+        <h1 class="page-title">커뮤니티 게시판</h1>
+        <p class="subtitle">지역 주민과 방문자가 익명으로 장소 경험을 공유하는 공간입니다.</p>
+      </div>
       </div>
 
       <div class="board-layout">
@@ -133,6 +140,7 @@ function overallNumber(indexInPage) {
 
             <td class="col-title">
               <router-link :to="`/board/${post.id}`" @click.stop>{{ post.title }}</router-link>
+              <span v-if="post.isResident" class="resident-badge">주민 참여</span>
             </td>
 
             <td class="col-date">{{ formatMMDD(post.createdAt) }}</td>
@@ -169,24 +177,27 @@ function overallNumber(indexInPage) {
 .board-page {
   margin: 0 auto;
   padding: 24px;
-  max-width: 920px;
+  max-width: 1200px;
   box-sizing: border-box;
 }
 
 .board-layout {
   display: grid;
-  grid-template-columns: 1fr 280px;
+  grid-template-columns: 1fr 220px;
   gap: 24px;
+  align-items: start;
 }
 
 .board-main { min-width:0 }
 
-.board-aside { position: relative }
-.board-aside .card { position: sticky; top: 88px }
+.board-aside {
+  position: sticky;
+  top: 88px;
+}
 
 @media (max-width: 1024px) {
   .board-layout { grid-template-columns: 1fr }
-  .board-aside .card { position: static }
+  .board-aside { position: static }
 }
 
 .board-header {
@@ -198,21 +209,19 @@ function overallNumber(indexInPage) {
 
 .page-title {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.75rem;
 }
 
-.btn {
-  background-color: var(--color-primary);
-  color: #fff;
-  border: none;
-  padding: 8px 14px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  font-weight: 600;
+.eyebrow {
+  color: var(--color-primary);
+  font-size: 0.875rem;
+  font-weight: 700;
+  margin: 0 0 6px;
 }
 
-.write-btn {
-  white-space: nowrap;
+.subtitle {
+  color: var(--color-muted);
+  margin: 6px 0 0;
 }
 
 .search-row {
@@ -282,6 +291,21 @@ function overallNumber(indexInPage) {
 
 .col-title a:hover {
   text-decoration: underline;
+}
+
+.resident-badge {
+  background: var(--color-muted-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-muted);
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  margin-left: 8px;
+  padding: 3px 6px;
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
 /* pagination */

@@ -9,6 +9,24 @@
       <div class="hero-media">
         <img v-if="place.firstimage" :src="place.firstimage" :alt="place.title" />
         <div v-else class="hero-placeholder">{{ place.title }}</div>
+
+        <button
+          class="star-right"
+          :class="{ on: isFavorited }"
+          type="button"
+          :aria-pressed="isFavorited"
+          :aria-label="isFavorited ? '즐겨찾기 해제' : '즐겨찾기 추가'"
+          @click="toggleFavoriteWithToast"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M12 17.3l-6.16 3.64 1.18-6.88L2 9.9l6.92-1L12 2l3.08 6.9L22 9.9l-4.02 4.16 1.18 6.88L12 17.3z"
+              :fill="isFavorited ? '#FBBF24' : 'none'"
+              :stroke="isFavorited ? '#FBBF24' : '#9CA3AF'"
+              stroke-width="1.2"
+            />
+          </svg>
+        </button>
       </div>
 
       <div class="detail-body">
@@ -42,17 +60,17 @@
           </div>
           <div v-else class="no-related">
             <p>아직 이 장소의 이야기가 없어요. 첫 후기를 남겨보세요!</p>
-            <router-link to="/write" class="btn">이 장소 후기 쓰기</router-link>
           </div>
         </section>
 
         <div class="actions">
-          <button class="btn" @click="toggleFavorite">{{ isFavorited ? '즐겨찾기 취소' : '즐겨찾기' }}</button>
-          <router-link to="/write" class="btn">이 장소 후기 쓰기</router-link>
+          <router-link :to="writeLink" class="btn">이 장소 후기 쓰기</router-link>
           <router-link to="/explore" class="btn btn-muted">목록으로</router-link>
         </div>
       </div>
     </div>
+
+    <div v-if="toast" class="toast">{{ toast }}</div>
   </div>
 </template>
 
@@ -83,9 +101,13 @@ onMounted(()=>{
 const relatedPosts = computed(()=>{
   if(!place.value) return []
   const name = String(place.value.title || '')
+  const contentid = String(place.value.contentid || '')
   if(!name) return []
   const lower = name.toLowerCase()
-  return posts.value.filter(p => ((p.title||'') + ' ' + (p.content||'')).toLowerCase().includes(lower))
+  return posts.value.filter((p) => {
+    const text = `${p.title || ''} ${p.content || ''} ${p.place || ''}`.toLowerCase()
+    return String(p.placeId || '') === contentid || String(p.place || '') === name || text.includes(lower)
+  })
 })
 
 const sortBy = ref('recent')
@@ -98,11 +120,58 @@ const sortedRelated = computed(()=>{
 const favorites = ref([])
 const isFavorited = computed(()=> place.value && favorites.value.some(id=> String(id)===String(place.value.contentid)))
 function toggleFavorite(){ if(!place.value) return; const id = place.value.contentid; if(isFavorited.value){ favorites.value = favorites.value.filter(x=>String(x)!==String(id)) } else { favorites.value.push(id) } localStorage.setItem('favorites', JSON.stringify(favorites.value)) }
+
+const toast = ref('')
+let toastTimer = null
+function toggleFavoriteWithToast(){
+  toggleFavorite()
+  toast.value = isFavorited.value ? '즐겨찾기에 추가되었습니다.' : '즐겨찾기에서 제거되었습니다.'
+  if (toastTimer) clearTimeout(toastTimer)
+  toastTimer = setTimeout(()=>{ toast.value = ''; toastTimer = null }, 1800)
+}
+
+const writeLink = computed(() => {
+  if (!place.value) return '/write'
+  const params = new URLSearchParams({
+    placeId: String(place.value.contentid || ''),
+    place: String(place.value.title || ''),
+  })
+  return `/write?${params.toString()}`
+})
 </script>
 
 <style scoped>
 .explore-detail { max-width:800px; margin:0 auto; padding:24px }
-.hero-media { height:320px; overflow:hidden; border-radius:var(--radius-lg); background:var(--color-muted-surface); display:flex; align-items:center; justify-content:center }
+.hero-media { position:relative; height:320px; overflow:hidden; border-radius:var(--radius-lg); background:var(--color-muted-surface); display:flex; align-items:center; justify-content:center }
+
+/* 목록 카드와 동일한 우측 상단 별 버튼 */
+.star-right {
+  align-items: center;
+  background: rgba(255,255,255,0.94);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  display: inline-flex;
+  height: 40px;
+  justify-content: center;
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  width: 40px;
+}
+.star-right.on { background: #fff7db }
+
+.toast {
+  background: rgba(15,23,36,0.9);
+  border-radius: var(--radius-full);
+  bottom: 96px;
+  color: #fff;
+  left: 50%;
+  padding: 10px 16px;
+  position: fixed;
+  transform: translateX(-50%);
+  z-index: 2000;
+}
 .hero-media img{ width:100%; height:100%; object-fit:cover }
 .hero-placeholder{ color:var(--color-muted); font-weight:700 }
 .detail-body{ margin-top:16px }
@@ -117,7 +186,8 @@ function toggleFavorite(){ if(!place.value) return; const id = place.value.conte
 .r-excerpt{ color:var(--color-muted); margin-left:12px; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
 .r-meta{ color:var(--color-muted) }
 .no-related{ padding:12px 0 }
-.actions{ display:flex; gap:12px; margin-top:16px }
+.actions{ display:flex; flex-wrap:wrap; gap:12px; margin-top:16px }
+.btn{ border-radius:var(--radius-sm); padding:8px 12px }
 .btn-muted{ background:transparent; border:1px solid var(--color-border); color:var(--color-text); border-radius:var(--radius-sm); padding:8px 12px }
 
 @media (max-width:640px){ .hero-media{ height:200px } }

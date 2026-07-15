@@ -1,18 +1,33 @@
 function daysAgo(n){ return new Date(Date.now() - n*86400000).toISOString() }
 
+// place/address/region은 seoul_attractions.json의 실제 장소와 일치시켜
+// 홈 "지금 뜨는 장소", 대시보드 자치구 통계, 장소 상세의 관련 글이 처음부터 동작하게 한다.
 const posts = [
-  { id:1001, title:'경복궁 야간개장 후기 - 사진 꿀팁 공유', content:'경복궁 야간개장 다녀왔어요. 조명이 정말 예쁘더라구요. 한적한 시간대 팁도 있어요. 카메라 삼각대는 필수입니다.', password:'1234', createdAt: daysAgo(1), views: 270, likes: 18 },
-  { id:1002, title:'북촌한옥마을 산책 코스 추천', content:'주말에 북촌 한옥마을 돌았는데 골목길이 정말 좋아요. 경치 좋은 카페도 하나 발견했어요. 동네 산책하듯 걷기 좋아요.', password:'1234', createdAt: daysAgo(3), views: 85, likes: 6 },
-  { id:1003, title:'서울숲에서 반려견 놀아주실 분?', content:'서울숲 근처 사는 지역 주민 3년차인데, 주말에 같이 산책하실 분 계실까요? 애견 동행 환영합니다.', password:'1234', createdAt: daysAgo(5), views: 42, likes: 2 },
-  { id:1004, title:'남산서울타워 야경 질문', content:'남산타워 전망대 예약 관련해서 질문 있어요. 야경 보러 가는데 좋은 시간대 추천 부탁드립니다.', password:'1234', createdAt: daysAgo(2), views: 60, likes: 4 },
-  { id:1005, title:'광장시장 먹거리 추천', content:'광장시장 떡볶이랑 빈대떡 꼭 드셔보세요. 특히 야채빈대떡이 아주 맛있습니다. 시장 골목 사이 골목 맛집 소개합니다.', password:'1234', createdAt: daysAgo(7), views: 150, likes: 12 },
-  { id:1006, title:'창덕궁 후원 예약 꿀팁', content:'창덕궁 후원은 예약이 필수예요. 평일 오전 시간을 노리면 한적하고 좋습니다. 지역 주민 팁으로 입장 줄이 짧아요.', password:'1234', createdAt: daysAgo(10), views: 32, likes: 1 },
-  { id:1007, title:'동대문디자인플라자(DDP) 전시 같이 보실 분', content:'이번 주말 DDP에서 전시 보려고 합니다. 관심 있으신 분 같이 가요. 1~2시간 정도 편하게 보실 분 모집합니다.', password:'1234', createdAt: daysAgo(4), views: 95, likes: 8 },
-  { id:1008, title:'청계천 새벽 조깅 루트 공유', content:'청계천 새벽 러닝 코스 좋아요. 조용하고 공기도 괜찮습니다. 지역 주민 n년차인데 강추합니다.', password:'1234', createdAt: daysAgo(12), views: 28, likes: 0 },
-  { id:1009, title:'광장시장 야시장 분위기 후기', content:'어제 광장시장 갔다 왔는데 사람 진짜 많네요. 그래도 먹거리는 훌륭했습니다. 친구들이랑 떠들며 다니기 좋아요.', password:'1234', createdAt: daysAgo(6), views: 310, likes: 20 },
-  { id:1010, title:'북촌한옥마을 골목 사진 포인트', content:'북촌에 사진 찍기 좋은 포인트 정리했어요. 낮보단 해질녘 추천합니다. 삼청동 쪽으로 이어지는 길이 특히 예뻐요.', password:'1234', createdAt: daysAgo(9), views: 48, likes: 3 },
-  { id:1011, title:'경복궁 근처 맛집 질문', content:'경복궁 가는 길에 점심 먹을만한 곳 있을까요? 동네 주민 n년차로서 몇 군데 추천해 드립니다.', password:'1234', createdAt: daysAgo(11), views: 22, likes: 0 },
-  { id:1012, title:'서울숲 플리마켓 꿀팁 공유', content:'주말 플리마켓에서 좋은 소품 득템했습니다. 이른 시간에 가면 주차도 편하고 사람도 적어요.', password:'1234', createdAt: daysAgo(14), views: 18, likes: 1 }
+  { id:1001, title:'경복궁 야간개장 후기 - 사진 꿀팁 공유', content:'경복궁 야간개장 다녀왔어요. 조명이 정말 예쁘더라구요. 한적한 시간대 팁도 있어요. 카메라 삼각대는 필수입니다.', password:'1234', createdAt: daysAgo(1), views: 270, likes: 18, place:'경복궁', address:'서울특별시 종로구 사직로 161 (세종로)', region:'종로구', isResident:false },
+  { id:1002, title:'북촌한옥마을 산책 코스 추천', content:'주말에 북촌 한옥마을 돌았는데 골목길이 정말 좋아요. 경치 좋은 카페도 하나 발견했어요. 동네 산책하듯 걷기 좋아요.', password:'1234', createdAt: daysAgo(3), views: 85, likes: 6, place:'북촌한옥마을', address:'서울특별시 종로구 계동길 37 (계동)', region:'종로구', isResident:true },
+  { id:1003, title:'서울숲에서 반려견 놀아주실 분?', content:'서울숲 근처 사는 지역 주민 3년차인데, 주말에 같이 산책하실 분 계실까요? 애견 동행 환영합니다.', password:'1234', createdAt: daysAgo(5), views: 42, likes: 2, place:'서울숲', address:'서울특별시 성동구 뚝섬로 273', region:'성동구', isResident:true },
+  { id:1004, title:'남산서울타워 야경 질문', content:'남산서울타워 전망대 예약 관련해서 질문 있어요. 야경 보러 가는데 좋은 시간대 추천 부탁드립니다.', password:'1234', createdAt: daysAgo(2), views: 60, likes: 4, place:'남산서울타워', address:'서울특별시 용산구 남산공원길 105', region:'용산구', isResident:false },
+  { id:1005, title:'광장시장 먹거리 추천', content:'광장시장 떡볶이랑 빈대떡 꼭 드셔보세요. 특히 야채빈대떡이 아주 맛있습니다. 시장 골목 사이 골목 맛집 소개합니다.', password:'1234', createdAt: daysAgo(7), views: 150, likes: 12, place:'광장시장', address:'서울특별시 종로구 창경궁로 88', region:'종로구', isResident:true },
+  { id:1006, title:'창덕궁 후원 예약 꿀팁', content:'창덕궁 후원은 예약이 필수예요. 평일 오전 시간을 노리면 한적하고 좋습니다. 지역 주민 팁으로 입장 줄이 짧아요.', password:'1234', createdAt: daysAgo(10), views: 32, likes: 1, place:'창덕궁 향나무', address:'서울특별시 종로구 율곡로 99', region:'종로구', isResident:true },
+  { id:1007, title:'동대문디자인플라자(DDP) 전시 같이 보실 분', content:'이번 주말 DDP에서 전시 보려고 합니다. 관심 있으신 분 같이 가요. 1~2시간 정도 편하게 보실 분 모집합니다.', password:'1234', createdAt: daysAgo(4), views: 95, likes: 8, place:'동대문디자인플라자(DDP)', address:'서울특별시 중구 을지로 281 (을지로7가)', region:'중구', isResident:false },
+  { id:1008, title:'청계천 새벽 조깅 루트 공유', content:'청계천 새벽 러닝 코스 좋아요. 조용하고 공기도 괜찮습니다. 지역 주민 n년차인데 강추합니다.', password:'1234', createdAt: daysAgo(12), views: 28, likes: 0, place:'청계천', address:'서울특별시 종로구 창신동', region:'종로구', isResident:true },
+  { id:1009, title:'광장시장 야시장 분위기 후기', content:'어제 광장시장 갔다 왔는데 사람 진짜 많네요. 그래도 먹거리는 훌륭했습니다. 친구들이랑 떠들며 다니기 좋아요.', password:'1234', createdAt: daysAgo(6), views: 310, likes: 20, place:'광장시장', address:'서울특별시 종로구 창경궁로 88', region:'종로구', isResident:false },
+  { id:1010, title:'북촌한옥마을 골목 사진 포인트', content:'북촌에 사진 찍기 좋은 포인트 정리했어요. 낮보단 해질녘 추천합니다. 삼청동 쪽으로 이어지는 길이 특히 예뻐요.', password:'1234', createdAt: daysAgo(9), views: 48, likes: 3, place:'북촌한옥마을', address:'서울특별시 종로구 계동길 37 (계동)', region:'종로구', isResident:true },
+  { id:1011, title:'경복궁 근처 맛집 질문', content:'경복궁 가는 길에 점심 먹을만한 곳 있을까요? 동네 주민 n년차로서 몇 군데 추천해 드립니다.', password:'1234', createdAt: daysAgo(11), views: 22, likes: 0, place:'경복궁', address:'서울특별시 종로구 사직로 161 (세종로)', region:'종로구', isResident:true },
+  { id:1012, title:'서울숲 플리마켓 꿀팁 공유', content:'주말 플리마켓에서 좋은 소품 득템했습니다. 이른 시간에 가면 주차도 편하고 사람도 적어요.', password:'1234', createdAt: daysAgo(14), views: 18, likes: 1, place:'서울숲', address:'서울특별시 성동구 뚝섬로 273', region:'성동구', isResident:true },
+  { id:1013, title:'석촌호수 벚꽃 지고 나서도 걷기 좋아요', content:'석촌호수 한 바퀴가 딱 2.5km라 저녁 산책 코스로 최고입니다. 잠실 사는 주민으로서 러시아워 피하는 팁 알려드려요. 저녁 9시 이후가 한적합니다.', password:'1234', createdAt: daysAgo(0), views: 12, likes: 1, place:'석촌호수', address:'서울특별시 송파구 잠실동', region:'송파구', isResident:true },
+  { id:1014, title:'반포한강공원 달빛무지개분수 시간표', content:'반포한강공원 무지개분수 보러 갔는데 시간을 잘못 알아서 한참 기다렸어요. 평일 저녁 타임 기준으로 정리해서 공유합니다. 돗자리 자리 잡는 팁도 있어요.', password:'1234', createdAt: daysAgo(1), views: 188, likes: 15, place:'반포한강공원', address:'서울특별시 서초구 신반포로11길 40 (반포동)', region:'서초구', isResident:false },
+  { id:1015, title:'덕수궁 돌담길 점심 산책 코스', content:'회사가 시청 근처라 점심마다 덕수궁 돌담길 걷습니다. 정동 쪽으로 빠지는 길에 조용한 카페가 많아요. 직장인 산책 코스로 정리해봤습니다.', password:'1234', createdAt: daysAgo(2), views: 74, likes: 9, place:'덕수궁', address:'서울특별시 중구 세종대로 99 (정동)', region:'중구', isResident:true },
+  { id:1016, title:'홍대 주말 버스킹 어디서 하나요?', content:'이번 주말에 홍대 놀러 가는데 버스킹 많이 하는 위치가 궁금해요. 걷고싶은거리 쪽인가요? 시간대도 알려주시면 감사하겠습니다.', password:'1234', createdAt: daysAgo(3), views: 132, likes: 7, place:'홍대', address:'서울특별시 마포구 서교동', region:'마포구', isResident:false },
+  { id:1017, title:'낙산공원 야경 명당 위치 공유', content:'낙산공원 성곽길 야경은 서울에서 손꼽히는 뷰입니다. 이화마을 쪽 입구로 올라가면 계단이 완만해요. 동네 주민이 알려주는 포토 스팟 세 곳 공유합니다.', password:'1234', createdAt: daysAgo(4), views: 210, likes: 19, place:'낙산공원', address:'서울특별시 종로구 낙산길 41', region:'종로구', isResident:true },
+  { id:1018, title:'여의도한강공원 치맥 배달 구역 정리', content:'여의도한강공원에서 배달 음식 받을 수 있는 만남의 장소 위치를 정리했어요. 주말엔 물빛광장 쪽이 제일 붐비니 참고하세요.', password:'1234', createdAt: daysAgo(5), views: 305, likes: 24, place:'여의도한강공원', address:'서울특별시 영등포구 여의동로 330 (여의도동)', region:'영등포구', isResident:false },
+  { id:1019, title:'올림픽공원 들꽃마루 지금이 절정이에요', content:'올림픽공원 들꽃마루 꽃이 만개했습니다. 5호선 올림픽공원역보다 8호선 몽촌토성역에서 걷는 게 더 가까워요. 산책 겸 사진 찍기 좋습니다.', password:'1234', createdAt: daysAgo(6), views: 98, likes: 11, place:'올림픽공원', address:'서울특별시 송파구 올림픽로 424 (방이동)', region:'송파구', isResident:false },
+  { id:1020, title:'인사동 전통찻집 추천 부탁드려요', content:'부모님 모시고 인사동 갈 예정인데 조용한 전통찻집 추천 부탁드립니다. 쌈지길 근처면 더 좋아요.', password:'1234', createdAt: daysAgo(8), views: 66, likes: 3, place:'인사동', address:'서울특별시 종로구 인사동길 62 (관훈동)', region:'종로구', isResident:false },
+  { id:1021, title:'성수동 카페거리 신상 카페 정리 (주민판)', content:'성수동 5년차 주민입니다. 관광객 많은 곳 말고 동네 사람들이 실제로 가는 카페 위주로 정리했어요. 수제화거리 안쪽 골목이 진짜입니다.', password:'1234', createdAt: daysAgo(9), views: 156, likes: 17, place:'성수동 카페거리', address:'서울특별시 성동구 성수동2가', region:'성동구', isResident:true },
+  { id:1022, title:'명동 환전소보다 나은 방법 있나요?', content:'외국인 친구가 명동에서 환전하려는데 요즘도 명동 환전소가 제일 나은가요? 다른 방법 아시는 분 조언 부탁드립니다.', password:'1234', createdAt: daysAgo(13), views: 44, likes: 2, place:'명동', address:'서울특별시 중구 명동2가', region:'중구', isResident:false },
+  { id:1023, title:'망원한강공원 일몰 피크닉 후기', content:'망원한강공원에서 일몰 피크닉 했는데 정말 좋았어요. 망원시장에서 먹거리 사서 가면 가성비 최고입니다. 시장에서 공원까지 도보 10분이에요.', password:'1234', createdAt: daysAgo(15), views: 120, likes: 10, place:'망원한강공원', address:'서울특별시 마포구 마포나루길 467', region:'마포구', isResident:true },
+  { id:1024, title:'잠실한강공원 자전거 대여 위치', content:'잠실한강공원 자전거 대여소 위치랑 요금 정리했습니다. 뚝섬 방향으로 라이딩하면 코스가 평탄해서 초보자한테 좋아요.', password:'1234', createdAt: daysAgo(17), views: 58, likes: 4, place:'잠실한강공원', address:'서울특별시 송파구 한가람로 65 (잠실동)', region:'송파구', isResident:false },
+  { id:1025, title:'보라매공원 새벽 운동 모임 하실 분', content:'보라매공원에서 평일 새벽 6시에 러닝하는 동네 모임입니다. 신대방동 주민 위주로 모이고 있는데 인원 더 받아요. 부담 없이 댓글 주세요.', password:'1234', createdAt: daysAgo(19), views: 36, likes: 2, place:'보라매공원', address:'서울특별시 동작구 여의대방로20길 33 (신대방동)', region:'동작구', isResident:true }
 ]
 
 export default posts

@@ -45,9 +45,23 @@ function normalizeAttractions(items = []) {
     })
 }
 
+/** localStorage의 실제 커뮤니티 게시글 — 없으면 시드 게시글로 대체 */
+function loadCommunityPosts() {
+  try {
+    const raw = localStorage.getItem('posts')
+    const parsed = raw ? JSON.parse(raw) : []
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      // 비밀번호는 챗봇 컨텍스트에 포함하지 않는다
+      return parsed.map(({ password, ...rest }) => ({ ...rest }))
+    }
+  } catch {
+    /* ignore */
+  }
+  return SEED_POSTS.map((post) => ({ ...post }))
+}
+
 const DATA_SOURCE = {
   attractions: normalizeAttractions(seoulAttractions?.items || []),
-  posts: SEED_POSTS.map((post) => ({ ...post })),
   tips: LOCAL_TIPS.map((tip) => ({ ...tip })),
 }
 
@@ -99,7 +113,7 @@ function buildContext(question, source = {}) {
   const posts =
     source.posts?.length
       ? source.posts
-      : DATA_SOURCE.posts
+      : loadCommunityPosts()
 
   const tips =
     source.tips?.length
@@ -198,7 +212,7 @@ ${rankedPosts
         {
           role: 'system',
          content: `
-너는 LocalHub AI 관광 도우미다.
+너는 SeoulMate AI 관광 도우미다.
 
 반드시 아래 데이터만 근거로 답변한다.
 
@@ -232,20 +246,19 @@ ${contextText}
       ],
       temperature: 0.7,
       max_tokens: 600,
+      response_format: { type: 'json_object' },
     }),
   })
 
   if (!res.ok) throw new Error(`OpenAI API 오류: ${res.status}`)
   const data = await res.json()
-  const content = data.choices[0].message.content
-  try{
-    return JSON.parse(content)
-} catch {
-    return {
-        answer: content,
-        suggestions: [],
-    }
-}
+  const content = data.choices?.[0]?.message?.content ?? ''
+  try {
+    const parsed = JSON.parse(content)
+    return String(parsed.answer ?? content)
+  } catch {
+    return content
+  }
 }
 
 /** 로컬 폴백 — 같은 컨텍스트로 규칙 기반 답변 */
@@ -320,7 +333,10 @@ const {
   return lines.join('\n')
 }
 
-/** 챗봇 진입점 — API 키 유무에 따라 자동 분기 */
+/**
+ * 챗봇 진입점 — API 키 유무에 따라 자동 분기
+ * 반환 타입은 화면 출력이 안전하도록 항상 문자열로 통일한다.
+ */
 export async function askChatbot(question, history = [], source = {}) {
   const trimmed = (question || '').trim()
   if (!trimmed) {

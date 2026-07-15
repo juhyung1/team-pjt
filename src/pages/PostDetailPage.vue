@@ -24,7 +24,7 @@
       <div class="post-content">{{ post.content }}</div>
 
       <div class="like-row">
-        <button class="like-icon" :class="{ liked: isLiked }" @click="toggleLike" aria-pressed="isLiked">
+        <button class="like-icon" :class="{ liked: isLiked }" @click="toggleLike" :aria-pressed="isLiked" aria-label="좋아요">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
             <path d="M12 21s-7.5-4.7-10-8.2C-0.5 8 4 3 8.5 5.5 11 7 12 9 12 9s1-2 3.5-3.5C20 3 24.5 8 22 12.8 19.5 16.3 12 21 12 21z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             <path v-if="isLiked" d="M12 21s-7.5-4.7-10-8.2C-0.5 8 4 3 8.5 5.5 11 7 12 9 12 9s1-2 3.5-3.5C20 3 24.5 8 22 12.8 19.5 16.3 12 21 12 21z" fill="var(--color-danger)" />
@@ -168,6 +168,11 @@ function confirmModal() {
 
   const id = route.params.id
   if (modalAction.value === 'edit') {
+    try {
+      sessionStorage.setItem(`seoulmate:edit-verified:${id}`, String(Date.now()))
+    } catch {
+      // 세션 확인값 저장 실패 시에도 기존 비밀번호 재입력 흐름으로 수정 가능
+    }
     closeModal()
     router.push(`/write?edit=${id}`)
     return

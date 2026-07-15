@@ -32,7 +32,11 @@ const registeredPlacesCount = computed(() => {
 
 <template>
   <div>
-    <h1>DashBoard</h1>
+    <header class="page-head">
+      <p class="eyebrow">선택 기능</p>
+      <h1>지역 통계 대시보드</h1>
+      <p class="subtitle">localStorage에 저장된 서울 커뮤니티 게시글을 기준으로 활동 현황을 보여줍니다.</p>
+    </header>
 
     <section class="stats-row">
       <div class="stat-card">
@@ -62,9 +66,12 @@ const registeredPlacesCount = computed(() => {
 </template>
 
 <style scoped>
-h1 { margin-bottom: 12px }
+.page-head { margin-bottom: 16px }
+h1 { margin: 0 0 6px }
+.eyebrow { color: var(--color-primary); font-size: 0.875rem; font-weight: 700; margin: 0 0 6px }
+.subtitle { color: var(--color-muted); margin: 0 }
 .stats-row { display:flex; gap:12px; margin-bottom:18px; flex-wrap:wrap }
-.stat-card { background:#fff; border:1px solid #e6edf3; padding:12px 16px; border-radius:10px; min-width:160px }
-.label { color:#6b7280; font-size:13px }
+.stat-card { background:var(--color-surface); border:1px solid var(--color-border); padding:12px 16px; border-radius:var(--radius-sm); min-width:160px }
+.label { color:var(--color-muted); font-size:13px }
 .value { font-weight:700; margin-top:6px; font-size:18px }
 </style>
