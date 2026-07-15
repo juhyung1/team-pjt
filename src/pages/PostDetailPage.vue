@@ -229,18 +229,14 @@ function toggleLike() {
 
 <style scoped>
 .post-page {
-  --gap: 16px;
-  --max-width: 800px;
-  --primary: #2563eb;
-  --muted: #6b7280;
   margin: 0 auto;
   padding: 24px;
   box-sizing: border-box;
-  max-width: var(--max-width);
+  max-width: 800px;
 }
 .post-card {
   padding: 20px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--color-surface);
   box-shadow: 0 1px 2px rgba(16,24,40,0.04);
   border: 1px solid var(--color-border);
@@ -250,7 +246,7 @@ function toggleLike() {
   font-size: 1.6rem;
 }
 .meta {
-  color: var(--muted);
+  color: var(--color-muted);
   font-size: 0.9rem;
   display: flex;
   gap: 12px;
@@ -283,7 +279,7 @@ function toggleLike() {
 }
 .top-link.delete-link { color: var(--color-danger) }
 .btn {
-  background-color: var(--primary);
+  background-color: var(--color-primary);
   color: #fff;
   border: none;
   padding: 8px 12px;
@@ -296,13 +292,13 @@ function toggleLike() {
 }
 .btn-muted {
   background: var(--color-muted-surface);
-  color: #374151; /* slightly darker gray for text */
-  border: 1px solid rgba(55,65,81,0.06);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
 }
 .btn.cancel {
   background: transparent;
-  color: var(--muted);
-  border: 1px solid #d1d5db;
+  color: var(--color-muted);
+  border: 1px solid var(--color-border);
 }
 .no-post {
   text-align: center;
@@ -318,7 +314,7 @@ function toggleLike() {
   align-items: center;
   justify-content: center;
   padding: 6px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   cursor: pointer;
 }
 .like-icon.liked { color: var(--color-danger) }
@@ -335,9 +331,9 @@ function toggleLike() {
   z-index: 60;
 }
 .modal {
-  background: #fff;
+  background: var(--color-surface);
   padding: 20px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   width: 320px;
   box-shadow: 0 8px 30px rgba(2,6,23,0.2);
 }
@@ -347,8 +343,8 @@ function toggleLike() {
 .pw-input {
   width: 100%;
   padding: 8px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   margin-bottom: 8px;
 }
 .modal-actions {
@@ -357,7 +353,7 @@ function toggleLike() {
   gap: 8px;
 }
 .modal-error {
-  color: #dc2626;
+  color: var(--color-danger);
   font-size: 0.9rem;
   margin-bottom: 8px;
 }

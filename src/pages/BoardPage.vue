@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import TrendingAside from '../components/TrendingAside.vue'
 
 const router = useRouter()
 
@@ -92,11 +93,13 @@ function overallNumber(indexInPage) {
 <template>
   <div class="board-page">
     <div class="board-header">
-      <h1 class="page-title">게시판</h1>
-      <button class="btn write-btn" @click="goWrite">+ 글쓰기</button>
-    </div>
+        <h1 class="page-title">게시판</h1>
+        <button class="btn write-btn" @click="goWrite">+ 글쓰기</button>
+      </div>
 
-    <div class="search-row">
+      <div class="board-layout">
+        <div class="board-main">
+          <div class="search-row">
       <input
         v-model="searchTerm"
         type="text"
@@ -105,7 +108,7 @@ function overallNumber(indexInPage) {
       />
     </div>
 
-    <div class="card table-card">
+      <div class="card table-card">
       <table class="posts-table">
         <thead>
           <tr>
@@ -136,9 +139,9 @@ function overallNumber(indexInPage) {
           </tr>
         </tbody>
       </table>
-    </div>
+      </div>
 
-    <div class="pagination" v-if="totalPages > 1">
+      <div class="pagination" v-if="totalPages > 1">
       <button class="page-btn" @click="prevPage" :disabled="page===1">&lt;</button>
 
       <button
@@ -152,20 +155,38 @@ function overallNumber(indexInPage) {
       </button>
 
       <button class="page-btn" @click="nextPage" :disabled="page===totalPages">&gt;</button>
+        </div>
+      </div>
+
+      <aside class="board-aside">
+        <TrendingAside />
+      </aside>
     </div>
   </div>
 </template>
 
 <style scoped>
 .board-page {
-  --gap: 16px;
-  --max-width: 920px;
-  --primary: #2563eb;
-  --muted: #6b7280;
   margin: 0 auto;
   padding: 24px;
-  max-width: var(--max-width);
+  max-width: 920px;
   box-sizing: border-box;
+}
+
+.board-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 24px;
+}
+
+.board-main { min-width:0 }
+
+.board-aside { position: relative }
+.board-aside .card { position: sticky; top: 88px }
+
+@media (max-width: 1024px) {
+  .board-layout { grid-template-columns: 1fr }
+  .board-aside .card { position: static }
 }
 
 .board-header {
@@ -181,11 +202,11 @@ function overallNumber(indexInPage) {
 }
 
 .btn {
-  background-color: var(--primary);
+  background-color: var(--color-primary);
   color: #fff;
   border: none;
   padding: 8px 14px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-weight: 600;
 }
@@ -201,19 +222,19 @@ function overallNumber(indexInPage) {
 .search-input {
   width: 100%;
   padding: 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   font-size: 1rem;
   box-sizing: border-box;
 }
 
 .card.table-card {
-  background: #fff;
-  border-radius: 8px;
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
   box-shadow: 0 1px 2px rgba(16,24,40,0.04);
   padding: 0;
   overflow: hidden;
-  border: 1px solid #eef2ff;
+  border: 1px solid var(--color-border);
 }
 
 .posts-table {
@@ -222,7 +243,7 @@ function overallNumber(indexInPage) {
 }
 
 .posts-table thead {
-  background: #f8fafc;
+  background: var(--color-muted-surface);
 }
 
 .posts-table th,
@@ -232,7 +253,7 @@ function overallNumber(indexInPage) {
 }
 
 .posts-table tbody tr + tr {
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--color-border);
 }
 
 .post-row {
@@ -241,17 +262,17 @@ function overallNumber(indexInPage) {
 }
 
 .post-row:hover {
-  background: #fbfbff;
+  background: var(--color-muted-surface);
 }
 
 .col-num {
   width: 80px;
-  color: var(--muted);
+  color: var(--color-muted);
 }
 
 .col-date {
   width: 110px;
-  color: var(--muted);
+  color: var(--color-muted);
 }
 
 .col-title a {
@@ -273,17 +294,17 @@ function overallNumber(indexInPage) {
 
 .page-btn {
   background: transparent;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   padding: 6px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   min-width: 36px;
 }
 
 .page-btn.active {
-  background: var(--primary);
+  background: var(--color-primary);
   color: #fff;
-  border-color: var(--primary);
+  border-color: var(--color-primary);
 }
 
 .page-btn:disabled {
@@ -295,6 +316,6 @@ function overallNumber(indexInPage) {
 .no-rows td {
   padding: 28px;
   text-align: center;
-  color: var(--muted);
+  color: var(--color-muted);
 }
 </style>

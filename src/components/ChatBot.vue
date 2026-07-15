@@ -33,7 +33,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, onMounted, watch, nextTick, onUnmounted } from 'vue'
 import seoulData from '../data/seoul_attractions.json'
 
 const open = ref(false)
@@ -43,6 +43,49 @@ const messages = ref([])
 const bodyRef = ref(null)
 
 const OPENAI_KEY = import.meta.env.VITE_OPENAI_API_KEY || ''
+const seoulItems = ref(Array.isArray(seoulData?.items) ? seoulData.items : [])
+
+async function ensureSeoulData() {
+  if (seoulItems.value && seoulItems.value.length) return
+  try {
+    // try fetching JSON from the project data folder
+    const res = await fetch('/src/data/seoul_attractions.json')
+    if (!res.ok) return
+    const j = await res.json()
+    if (Array.isArray(j?.items)) seoulItems.value = j.items
+  } catch (e) {
+    // ignore
+  }
+}
+
+// ensure data on mount
+onMounted(() => {
+  ensureSeoulData()
+})
+
+function updateFabBottom() {
+  const panelEl = document.querySelector('.panel')
+  if (panelEl && open.value) {
+    const rect = panelEl.getBoundingClientRect()
+    // distance from bottom of viewport to top of panel
+    const distance = Math.max(0, window.innerHeight - rect.top)
+    // place fab above panel with extra margin
+    const margin = 24
+    const value = distance + margin
+    document.documentElement.style.setProperty('--fab-bottom', value + 'px')
+  } else {
+    document.documentElement.style.setProperty('--fab-bottom', '88px')
+  }
+}
+
+watch(open, async (v) => {
+  await nextTick()
+  updateFabBottom()
+})
+
+function onResize() { updateFabBottom() }
+window.addEventListener('resize', onResize)
+onUnmounted(()=>{ window.removeEventListener('resize', onResize); document.documentElement.style.setProperty('--fab-bottom','88px') })
 
 function pushBot(text) {
   messages.value.push({ role: 'assistant', content: text })
@@ -65,21 +108,38 @@ watch(messages, async () => {
   }
 })
 
+function tokenizeQuery(query) {
+  if (!query) return []
+  const words = String(query)
+    .split(/\s+/)
+    .map(w => w.replace(/[^\p{L}\p{N}]/gu, ''))
+    .filter(Boolean)
+    .filter(w => w.length >= 2)
+  return words
+}
+
 function findPlaces(query) {
   if (!query) return []
-  const q = String(query).toLowerCase()
-  const items = Array.isArray(seoulData?.items) ? seoulData.items : []
-  return items.filter(i => String(i.title || '').toLowerCase().includes(q)).slice(0,5)
+  const tokens = tokenizeQuery(query).map(t => t.toLowerCase())
+  if (!tokens.length) return []
+  const items = Array.isArray(seoulItems.value) ? seoulItems.value : []
+  const matched = items.filter(i => {
+    const title = String(i.title || '').toLowerCase()
+    return tokens.some(tok => title.includes(tok))
+  })
+  return matched.slice(0,5)
 }
 
 function findPosts(query) {
   try {
     const raw = localStorage.getItem('posts')
     const parsed = raw ? JSON.parse(raw) : []
-    const q = String(query).toLowerCase()
-    return (Array.isArray(parsed) ? parsed : [])
-      .filter(p => (String(p.title||'')+ ' ' + String(p.content||'')).toLowerCase().includes(q))
-      .slice(0,3)
+    const tokens = tokenizeQuery(query).map(t => t.toLowerCase())
+    if (!tokens.length) return []
+    return (Array.isArray(parsed) ? parsed : []).filter(p => {
+      const text = (String(p.title||'') + ' ' + String(p.content||'')).toLowerCase()
+      return tokens.some(tok => text.includes(tok))
+    }).slice(0,3)
   } catch {
     return []
   }
@@ -107,19 +167,37 @@ async function send() {
   input.value = ''
 
   // prepare system message with reference data
-  const refData = buildSystemMessage(q)
+  const places = findPlaces(q)
+  const postsRef = findPosts(q)
+  const refDataParts = []
+  if (places.length) {
+    refDataParts.push('관광지 참고:')
+    places.forEach(p => refDataParts.push(`- ${p.title} (${p.addr1||''})`))
+  }
+  if (postsRef.length) {
+    refDataParts.push('게시글 참고:')
+    postsRef.forEach(p => refDataParts.push(`- ${p.title}: ${String(p.content||'').slice(0,120)}`))
+  }
+  const refData = refDataParts.join('\n')
+
+  let systemContent = ''
+  if (refData) {
+    systemContent = `너는 서울 지역 정보 챗봇입니다. 아래 참고 데이터를 근거로 한국어로 친절하고 간결하게 답변하세요.\n\n참고 데이터:\n${refData}`
+  } else {
+    systemContent = '참고 데이터 없음. 서울 관련 일반 정보로 답하되 추측은 피하라.'
+  }
 
   if (!OPENAI_KEY) {
     pushBot('API 키가 설정되지 않았어요')
     return
   }
 
+  // show typing indicator
+  pushBot('...')
   loading.value = true
 
   const msgs = []
-  // system message: instruct model and include reference data
-  msgs.push({ role: 'system', content: `너는 서울 지역 정보 챗봇입니다. 아래 참고 데이터를 근거로 한국어로 친절하고 간결하게 답변하세요.\n\n참고 데이터:\n${refData}` })
-  // include conversation history
+  msgs.push({ role: 'system', content: systemContent })
   messages.value.forEach(m => msgs.push({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content }))
 
   try {
@@ -129,15 +207,38 @@ async function send() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${OPENAI_KEY}`
       },
-      body: JSON.stringify({ model: 'gpt-4o-mini', messages: msgs, max_tokens: 600 })
+     body: JSON.stringify({
+      model: 'gpt-5-mini',
+      messages: msgs,
+      max_completion_tokens: 2000,
+      reasoning_effort: 'low'
+})
     })
 
-    if (!res.ok) throw new Error('api error')
+    if (!res.ok) {
+     const err = await res.json().catch(() => null)
+     console.error('OpenAI 에러:', res.status, err)
+     throw new Error('api error')
+}
     const data = await res.json()
     const text = data?.choices?.[0]?.message?.content
+    // replace the last typing indicator assistant message
+    for (let i = messages.value.length - 1; i >= 0; i--) {
+      if (messages.value[i].role === 'assistant' && messages.value[i].content === '...') {
+        messages.value.splice(i, 1)
+        break
+      }
+    }
     if (text) pushBot(text)
     else pushBot('잠시 후 다시 시도해주세요')
   } catch (e) {
+    // replace typing indicator
+    for (let i = messages.value.length - 1; i >= 0; i--) {
+      if (messages.value[i].role === 'assistant' && messages.value[i].content === '...') {
+        messages.value.splice(i, 1)
+        break
+      }
+    }
     pushBot('잠시 후 다시 시도해주세요')
   } finally {
     loading.value = false
@@ -169,12 +270,22 @@ async function send() {
   width: 360px;
   height: 480px;
   background: var(--color-surface);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   box-shadow: 0 12px 40px rgba(2,6,23,0.06);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   z-index: 1000;
+}
+
+@media (max-width: 640px) {
+  .panel {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
 }
 .panel-header {
   display: flex;
@@ -200,7 +311,7 @@ async function send() {
   flex: 1 1 auto;
   padding: 8px 10px;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--color-surface);
 }
 .send {
@@ -208,12 +319,12 @@ async function send() {
   color: #fff;
   border: none;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
 }
 .msg { margin-bottom: 10px; display:flex }
 .msg.user { justify-content: flex-end }
 .msg.bot { justify-content: flex-start }
-.bubble { max-width: 76%; padding: 8px 12px; border-radius: 12px; line-height:1.4 }
+.bubble { max-width: 76%; padding: 8px 12px; border-radius: var(--radius-md); line-height:1.4 }
 .msg.user .bubble { background: var(--color-primary); color: #fff; border-bottom-right-radius: 4px }
 .msg.bot .bubble { background: var(--color-muted-surface); color: var(--color-text) }
 </style>

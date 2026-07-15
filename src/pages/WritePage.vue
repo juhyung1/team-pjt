@@ -36,6 +36,7 @@ const route = useRoute()
 const title = ref('')
 const content = ref('')
 const password = ref('')
+const isResident = ref(false)
 
 const isEdit = computed(() => route.query && route.query.edit != null)
 
@@ -72,6 +73,7 @@ onMounted(() => {
     }
     title.value = post.title
     content.value = post.content
+    isResident.value = Boolean(post.isResident)
     // do not prefill password for security
   }
 })
@@ -108,7 +110,7 @@ function onSubmit() {
       return
     }
 
-    posts[idx] = { ...stored, title: t, content: c }
+    posts[idx] = { ...stored, title: t, content: c, isResident: Boolean(isResident.value) }
     savePosts(posts)
     router.push('/board')
     return
@@ -120,6 +122,7 @@ function onSubmit() {
     title: t,
     content: c,
     password: pw,
+    isResident: Boolean(isResident.value),
     createdAt: new Date().toISOString(),
     views: 0,
   }
@@ -136,23 +139,19 @@ function onCancel() {
 
 <style scoped>
 .write-page {
-  --gap: 16px;
-  --max-width: 720px;
-  --primary: #2563eb;
-  --muted: #6b7280;
   padding: 24px;
   margin: 0 auto;
-  max-width: var(--max-width);
+  max-width: 720px;
   box-sizing: border-box;
 }
 .title {
-  margin-bottom: calc(var(--gap) / 2);
+  margin-bottom: 8px;
   font-size: 1.5rem;
 }
 .form {
   display: flex;
   flex-direction: column;
-  gap: var(--gap);
+  gap: 16px;
 }
 .form-row {
   display: flex;
@@ -165,8 +164,8 @@ function onCancel() {
 .input,
 .textarea {
   padding: 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   font-size: 1rem;
   resize: vertical;
   min-height: 40px;
@@ -178,17 +177,17 @@ function onCancel() {
   align-items: center;
 }
 .btn {
-  background-color: var(--primary);
+  background-color: var(--color-primary);
   color: #fff;
   border: none;
   padding: 10px 16px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-weight: 600;
 }
 .btn.cancel {
   background: transparent;
-  color: var(--muted);
-  border: 1px solid #d1d5db;
+  color: var(--color-muted);
+  border: 1px solid var(--color-border);
 }
 </style>
