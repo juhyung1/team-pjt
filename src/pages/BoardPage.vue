@@ -1,164 +1,321 @@
-<script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
-import seoulData from '../data/seoul_attractions.json'
+<script setup>
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import TrendingAside from '../components/TrendingAside.vue'
 
-const posts = ref<any[]>([])
-try {
-  const raw = localStorage.getItem('posts')
-  const parsed = raw ? JSON.parse(raw) : []
-  posts.value = Array.isArray(parsed) ? parsed : []
-} catch {
-  posts.value = []
-}
+const router = useRouter()
 
-const topThree = ref<{ name: string; count: number }[]>([])
-const isFloating = ref(false)
-let lastScrollY = 0
+const searchTerm = ref('')
+const posts = ref([])
+const page = ref(1)
+const pageSize = 10
 
-function onScroll() {
-  const y = window.scrollY || window.pageYOffset
-  // enable floating after user scrolled past header area
-  isFloating.value = y > 120
-  lastScrollY = y
-}
-
-function computeTopThree() {
-  const items = Array.isArray((seoulData as any)?.items) ? (seoulData as any).items : []
-  const titles = items.map((it: any) => String(it.title || '').trim()).filter(Boolean)
-  const lowerTitles = titles.map((t: string) => t.toLowerCase())
-
-  const counts = new Map<string, number>()
-
-  posts.value.forEach((p) => {
-    const text = `${p.title || ''} ${p.content || ''} ${p.place || ''} ${(Array.isArray(p.places) ? p.places.join(' ') : '')}`.toLowerCase()
-    lowerTitles.forEach((lt, idx) => {
-      if (!lt) return
-      if (text.includes(lt)) {
-        const title = titles[idx]
-        counts.set(title, (counts.get(title) || 0) + 1)
-      }
-    })
-    // also count explicit place field if it's not a known title
-    if (p.place && !lowerTitles.includes(String(p.place).toLowerCase())) {
-      const name = String(p.place)
-      counts.set(name, (counts.get(name) || 0) + 1)
-    }
-    if (Array.isArray(p.places)) {
-      p.places.forEach((pp: string) => {
-        if (!pp) return
-        const name = String(pp)
-        counts.set(name, (counts.get(name) || 0) + 1)
-      })
-    }
-  })
-
-  const arr = Array.from(counts.entries()).map(([name, count]) => ({ name, count }))
-  arr.sort((a, b) => b.count - a.count)
-  topThree.value = arr.slice(0, 3)
-}
-
-// Keep posts and TOP3 in sync with localStorage (polling + reactive watch)
-let pollId: number | null = null
-let lastRaw = ''
-
-function readPostsFromStorage() {
+function loadPosts() {
   try {
-    const raw = localStorage.getItem('posts') || ''
-    if (raw !== lastRaw) {
-      lastRaw = raw
-      const parsed = raw ? JSON.parse(raw) : []
-      posts.value = Array.isArray(parsed) ? parsed : []
-    }
+    const raw = localStorage.getItem('posts')
+    const parsed = raw ? JSON.parse(raw) : []
+    posts.value = Array.isArray(parsed) ? parsed : []
   } catch {
     posts.value = []
   }
 }
 
 onMounted(() => {
-  readPostsFromStorage()
-  computeTopThree()
-  // poll for changes from other parts of the app
-  pollId = window.setInterval(() => {
-    const prev = JSON.stringify(posts.value)
-    readPostsFromStorage()
-    // if posts changed, recompute
-    if (JSON.stringify(posts.value) !== prev) computeTopThree()
-  }, 1000)
-  window.addEventListener('scroll', onScroll, { passive: true })
+  loadPosts()
+  // update when storage changes in other tabs
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'posts') loadPosts()
+  })
 })
 
-onBeforeUnmount(() => {
-  if (pollId) window.clearInterval(pollId)
-  window.removeEventListener('scroll', onScroll)
+const filtered = computed(() => {
+  const q = searchTerm.value.trim().toLowerCase()
+  const list = [...posts.value].sort((a, b) => Number(b.id) - Number(a.id))
+  if (!q) return list
+  return list.filter((p) => {
+    const t = String(p.title ?? '').toLowerCase()
+    const c = String(p.content ?? '').toLowerCase()
+    return t.includes(q) || c.includes(q)
+  })
 })
 
-// recompute when posts array changes within this component
-watch(posts, () => computeTopThree(), { deep: true })
+const totalItems = computed(() => filtered.value.length)
+const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / pageSize)))
+
+watch([totalItems, page], () => {
+  if (page.value > totalPages.value) page.value = totalPages.value
+})
+
+const paged = computed(() => {
+  const start = (page.value - 1) * pageSize
+  return filtered.value.slice(start, start + pageSize)
+})
+
+function formatMMDD(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${mm}.${dd}`
+}
+
+function goWrite() {
+  router.push('/write')
+}
+
+function goDetail(id) {
+  router.push(`/board/${id}`)
+}
+
+function prevPage() {
+  if (page.value > 1) page.value--
+}
+function nextPage() {
+  if (page.value < totalPages.value) page.value++
+}
+function setPage(n) {
+  page.value = n
+}
+
+const pageNumbers = computed(() => {
+  const arr = []
+  for (let i = 1; i <= totalPages.value; i++) arr.push(i)
+  return arr
+})
+
+function overallNumber(indexInPage) {
+  // newest has largest number
+  return totalItems.value - ((page.value - 1) * pageSize) - indexInPage
+}
 </script>
 
 <template>
-  <div class="board-layout container">
-    <main class="board-main">
-      <h1>게시판</h1>
-
-      <div class="posts-list">
-        <p v-if="!posts.length">아직 게시글이 없습니다.</p>
-        <ul v-else>
-          <li v-for="post in posts" :key="post.id" class="post-row">
-            <div class="post-title">{{ post.title }}</div>
-            <div class="post-meta">{{ post.region || post.address || post.place }}</div>
-          </li>
-        </ul>
+  <div class="board-page">
+    <div class="board-header">
+        <h1 class="page-title">게시판</h1>
+        <button class="btn write-btn" @click="goWrite">+ 글쓰기</button>
       </div>
-    </main>
 
-    <aside class="top3-widget" v-if="topThree.length">
-      <div class="widget-inner">
-        <h3>가장 많이 언급된 장소 TOP3</h3>
-        <ol class="top3-list">
-          <li v-for="(p, i) in topThree" :key="p.name" class="top3-item">
-            <span class="rank">#{{ i + 1 }}</span>
-            <div class="meta">
-              <div class="name">{{ p.name }}</div>
-              <div class="count">{{ p.count }}회</div>
-            </div>
-          </li>
-        </ol>
+      <div class="board-layout">
+        <div class="board-main">
+          <div class="search-row">
+      <input
+        v-model="searchTerm"
+        type="text"
+        placeholder="게시글 검색어를 입력하세요"
+        class="search-input"
+      />
+    </div>
+
+      <div class="card table-card">
+      <table class="posts-table">
+        <thead>
+          <tr>
+            <th class="col-num">번호</th>
+            <th class="col-title">제목</th>
+            <th class="col-date">작성일</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr v-if="!totalItems" class="no-rows">
+            <td colspan="3">아직 게시글이 없어요.</td>
+          </tr>
+
+          <tr
+            v-for="(post, idx) in paged"
+            :key="post.id"
+            class="post-row"
+            @click="goDetail(post.id)"
+          >
+            <td class="col-num">{{ overallNumber(idx) }}</td>
+
+            <td class="col-title">
+              <router-link :to="`/board/${post.id}`" @click.stop>{{ post.title }}</router-link>
+            </td>
+
+            <td class="col-date">{{ formatMMDD(post.createdAt) }}</td>
+          </tr>
+        </tbody>
+      </table>
       </div>
-    </aside>
+
+      <div class="pagination" v-if="totalPages > 1">
+      <button class="page-btn" @click="prevPage" :disabled="page===1">&lt;</button>
+
+      <button
+        v-for="n in pageNumbers"
+        :key="n"
+        class="page-btn"
+        :class="{ active: n === page }"
+        @click="setPage(n)"
+      >
+        {{ n }}
+      </button>
+
+      <button class="page-btn" @click="nextPage" :disabled="page===totalPages">&gt;</button>
+        </div>
+      </div>
+
+      <aside class="board-aside">
+        <TrendingAside />
+      </aside>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.board-layout { display: flex; gap: 24px; align-items: flex-start }
-.board-main { flex: 1 }
-.posts-list { margin-top: 16px }
-.post-row { padding: 12px 0; border-bottom: 1px solid var(--color-border) }
-.post-title { font-weight: 600 }
-.post-meta { color: var(--color-muted); font-size: 0.95rem }
-
-.top3-widget { width: 300px }
-
-.top3-widget .widget-inner { background: var(--color-card-bg); border: 1px solid rgba(14,23,42,0.04); border-radius: 10px; padding: 10px; box-shadow: 0 6px 16px rgba(17,24,39,0.04); transition: transform 260ms cubic-bezier(.2,.9,.3,1), box-shadow 260ms }
-.top3-widget h3 { margin: 0 0 10px 0; font-size: 1rem }
-.top3-list { list-style: none; padding: 0; margin: 0 }
-.top3-item { display: flex; gap: 12px; align-items: center; padding: 8px 6px; border-radius: 8px; transition: background 160ms }
-.top3-item:hover { background: rgba(59,130,246,0.04) }
-.top3-item .rank { font-weight: 700; color: #fff; background: var(--color-primary); width: 34px; height: 34px; display:flex; align-items:center; justify-content:center; border-radius: 6px; font-size:0.95rem }
-.top3-item .meta { display:flex; justify-content: space-between; width: 100%; gap: 8px; align-items:center }
-.top3-item .name { font-weight: 600; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-.top3-item .count { color: var(--color-muted); font-size: 0.9rem }
-
-/* floating state: subtle translate and stronger shadow to create "following" impression */
-.top3-widget.floating .widget-inner { transform: translateY(8px); box-shadow: 0 10px 30px rgba(17,24,39,0.08) }
-
-/* sticky behavior but within flow so it won't overlap content */
-@media (min-width: 900px) {
-  .top3-widget { position: -webkit-sticky; position: sticky; top: 96px; align-self: start }
+.board-page {
+  margin: 0 auto;
+  padding: 24px;
+  max-width: 920px;
+  box-sizing: border-box;
 }
 
-@media (max-width: 899px) {
-  .top3-widget { display: none }
+.board-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 24px;
 }
 
+.board-main { min-width:0 }
+
+.board-aside { position: relative }
+.board-aside .card { position: sticky; top: 88px }
+
+@media (max-width: 1024px) {
+  .board-layout { grid-template-columns: 1fr }
+  .board-aside .card { position: static }
+}
+
+.board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.btn {
+  background-color: var(--color-primary);
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.write-btn {
+  white-space: nowrap;
+}
+
+.search-row {
+  margin-bottom: 16px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.card.table-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 2px rgba(16,24,40,0.04);
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.posts-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.posts-table thead {
+  background: var(--color-muted-surface);
+}
+
+.posts-table th,
+.posts-table td {
+  padding: 12px 16px;
+  text-align: left;
+}
+
+.posts-table tbody tr + tr {
+  border-top: 1px solid var(--color-border);
+}
+
+.post-row {
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.post-row:hover {
+  background: var(--color-muted-surface);
+}
+
+.col-num {
+  width: 80px;
+  color: var(--color-muted);
+}
+
+.col-date {
+  width: 110px;
+  color: var(--color-muted);
+}
+
+.col-title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.col-title a:hover {
+  text-decoration: underline;
+}
+
+/* pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.page-btn {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  min-width: 36px;
+}
+
+.page-btn.active {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+
+.page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* small states */
+.no-rows td {
+  padding: 28px;
+  text-align: center;
+  color: var(--color-muted);
+}
 </style>

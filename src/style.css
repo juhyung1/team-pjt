@@ -1,12 +1,16 @@
 /* Design tokens & reset */
 :root{
-  --color-primary: #3B82F6;
-  --color-primary-dark: #2563EB;
-  --color-bg: #F8FAFC;
-  --color-card-bg: #FFFFFF;
-  --color-text: #111827;
-  --color-muted: #6B7280;
-  --color-border: #E5E7EB;
+  /* Minimal restrained palette: use color only for primary CTA and danger */
+  --color-primary: #2563eb; /* CTA */
+  --color-primary-dark: #1e4fcf;
+  --color-bg: #F8FAFC; /* page background */
+  --color-surface: #ffffff;
+  --color-card-bg: var(--color-surface);
+  --color-text: #0f1724;
+  --color-muted: #6b7280;
+  --color-border: #e6eef8; /* very subtle */
+  --color-muted-surface: #f6f7fb; /* subtle surfaces */
+  --color-danger: #dc2626;
 
   /* 8px spacing scale */
   --space-1: 8px;
@@ -15,8 +19,10 @@
   --space-4: 32px;
   --space-5: 40px;
 
-  --radius-1: 10px;
-  --radius-card: 16px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
 
   --shadow-soft: 0 8px 20px rgba(17,24,39,0.03);
 }
@@ -55,7 +61,7 @@ button { font: inherit; }
 .card{
   background: var(--color-card-bg);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-soft);
   padding: var(--space-2);
   color: var(--color-text);
@@ -69,7 +75,7 @@ button { font: inherit; }
   gap: 8px;
   background: var(--color-primary);
   color: #fff;
-  border-radius: var(--radius-1);
+  border-radius: var(--radius-sm);
   padding: var(--space-1) var(--space-2);
   border: none;
   cursor: pointer;
@@ -95,7 +101,7 @@ input, textarea, select {
   width: 100%;
   padding: var(--space-1);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: #fff;
   color: var(--color-text);
 }
