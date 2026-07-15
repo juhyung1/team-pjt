@@ -1,3 +1,10 @@
+
+<script setup>
+/* no script logic required for static header/navigation */
+import ChatbotWidget from './components/chatbot/ChatbotWidget.vue'
+
+</script>
+
 <template>
   <header class="app-header">
     <div class="container header-inner">
@@ -9,6 +16,8 @@
         <router-link to="/explore" class="nav-link">장소</router-link>
         <router-link to="/favorites" class="nav-link">즐겨찾기</router-link>
         <router-link to="/board" class="nav-link">게시판</router-link>
+        <router-link to="/write" class="nav-link">글쓰기</router-link>
+        <router-link to="/community" class="nav-link">DashBoard</router-link>
       </nav>
     </div>
   </header>
@@ -18,7 +27,7 @@
       <router-view />
     </div>
   </main>
-  <ChatBot />
+ <ChatbotWidget />
   <WriteFab />
   <footer class="app-footer">
     <div class="container">© {new Date().getFullYear()} SeoulMate — 서울 지역 정보 공유 커뮤니티</div>
@@ -27,9 +36,10 @@
 
 <script setup>
 /* no script logic required for static header/navigation */
-import ChatBot from './components/ChatBot.vue'
+import ChatbotWidget from './components/chatbot/ChatbotWidget.vue'
 import WriteFab from './components/WriteFab.vue'
 </script>
+
 
 <style scoped>
 .app-header {
@@ -44,7 +54,9 @@ import WriteFab from './components/WriteFab.vue'
 }
 
 /* ensure main content sits below the header */
-main { padding-top: 16px; padding-bottom: 120px; }
+
+
+main { padding-top: 16px; padding-bottom: 24px; }
 
 /* inner header layout (uses global .container) */
 .header-inner {

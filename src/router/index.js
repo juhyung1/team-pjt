@@ -6,6 +6,7 @@ import WritePage from '../pages/WritePage.vue'
 import ExplorePage from '../pages/ExplorePage.vue'
 import ExploreDetailPage from '../pages/ExploreDetailPage.vue'
 import FavoritesPage from '../pages/FavoritesPage.vue'
+import DashboardPage from '../pages/Dashboard.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -17,6 +18,7 @@ const router = createRouter({
     { path: '/board', component: BoardPage },
     { path: '/board/:id', component: PostDetailPage },
     { path: '/write', component: WritePage },
+    { path: '/community', component: DashboardPage },
   ],
 })
 
