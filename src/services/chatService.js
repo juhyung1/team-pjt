@@ -19,7 +19,31 @@ import { LOCAL_TIPS, SEED_POSTS } from "../data/seed";
 import seoulAttractions from "../data/seoul_attractions.json";
 
 const API_KEY = import.meta.env.VITE_OPENAI_API_KEY ?? "";
+const STOP_WORDS = [
+  "추천",
+  "알려줘",
+  "알려주세요",
+  "어디",
+  "근처",
+  "주변",
+  "코스",
+  "가볼",
+  "좋은",
+  "소개",
+  "해주세요",
+  "하고",
+  "싶어",
+];
 
+
+function tokenize(text = "") {
+  return text
+    .toLowerCase()
+    .replace(/[^\w가-힣\s]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .filter(word => !STOP_WORDS.includes(word));
+}
 function normalizeAttractions(items = []) {
   return (items || [])
     .filter((item) => item?.title)
@@ -65,13 +89,6 @@ const DATA_SOURCE = {
   posts: loadCommunityPosts(),
   tips: LOCAL_TIPS.map((tip) => ({ ...tip })),
 };
-function tokenize(text = "") {
-  return text
-    .toLowerCase()
-    .replace(/[^\w가-힣\s]/g, " ")
-    .split(/\s+/)
-    .filter(Boolean);
-}
 
 function calculateScore(item, keywords) {
   const text = [
@@ -90,19 +107,62 @@ function calculateScore(item, keywords) {
   let score = 0;
 
   keywords.forEach((keyword) => {
-    if (text.includes(keyword)) score += 2;
+if(text.includes(keyword)) {
 
+  // 의미 없는 일반 키워드 제외
+  if(
+    ["코스","추천","근처","주변","데이트"].includes(keyword)
+  ){
+    score +=0;
+  }
+  else {
+    score +=2;
+  }
+
+}
+if (
+ item.name?.includes(keyword)
+) {
+ score += 5;
+}
     if (
       item.name?.toLowerCase().includes(keyword) ||
       item.title?.toLowerCase().includes(keyword)
     ) {
-      score += 3;
+      score += 5;
     }
   });
 
   return score;
 }
 function buildContext(question, source = {}) {
+  const questionText = question.toLowerCase();
+
+const intent = {
+  placeKeyword: null,
+  nearby: false,
+  dateCourse: false,
+};
+
+
+if(questionText.includes("경복궁")){
+  intent.placeKeyword="경복궁";
+}
+
+if(
+ questionText.includes("근처") ||
+ questionText.includes("주변")
+){
+ intent.nearby=true;
+}
+
+
+if(
+ questionText.includes("데이트") ||
+ questionText.includes("코스")
+){
+ intent.dateCourse=true;
+}
   const keywords = tokenize(question);
 
   const places = source.attractions?.length
@@ -115,26 +175,53 @@ function buildContext(question, source = {}) {
   const tips = source.tips?.length ? source.tips : DATA_SOURCE.tips;
 
   const rankedPlaces = places
-    .map((place) => ({
-      ...place,
-      score: calculateScore(place, keywords),
-    }))
-    .filter((p) => p.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 5);
+.map((place)=>{
+
+  let score = calculateScore(place, keywords);
+
+
+  // 사용자가 특정 장소를 기준으로 검색한 경우
+  if(intent.placeKeyword){
+
+    // 해당 장소
+    if(place.name.includes(intent.placeKeyword)){
+      score += 30;
+    }
+
+
+    // 같은 지역
+    if(
+      place.address?.includes("종로") ||
+      place.district?.includes("종로")
+    ){
+      score +=10;
+    }
+
+  }
+
+
+  return {
+    ...place,
+    score
+  }
+
+
+})
+.filter((p)=>p.score>0)
+.sort((a,b)=>b.score-a.score)
+.slice(0,5);
 
   const placeIds = new Set(rankedPlaces.map((p) => Number(p.id)));
 
   const rankedPosts = posts
-    .map((post) => ({
-      ...post,
-      score:
-        calculateScore(post, keywords) +
-        (placeIds.has(Number(post.placeId)) ? 5 : 0),
-    }))
-    .filter((p) => p.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
+  .map((post) => ({
+    ...post,
+    score:
+      calculateScore(post, keywords) +
+      (placeIds.has(Number(post.placeId)) ? 2 : 0),
+  }))
+.filter((p)=>p.score >=3).sort((a, b) => b.score - a.score)
+  .slice(0, 3);
 
   const postPlaceIds = new Set(rankedPosts.map((p) => Number(p.placeId)));
 
@@ -142,13 +229,19 @@ function buildContext(question, source = {}) {
     .filter((tip) => postPlaceIds.has(Number(tip.placeId)))
     .sort((a, b) => b.likes - a.likes)
     .slice(0, 5);
-
+const hasRelatedData =
+  rankedPlaces.length > 0 ||
+  rankedPosts.length > 0 ||
+  rankedTips.length > 0;
   return {
     rankedPlaces,
     rankedPosts,
     rankedTips,
+      hasRelatedData,
+
   };
 }
+
 
 /** OpenAI API 호출 (키가 있을 때) */
 async function askOpenAI(question, history, source) {
@@ -213,6 +306,30 @@ ${rankedPosts
 반드시 아래 데이터만 근거로 답변한다.
 
 답변 규칙
+중요:
+사용자가 입력한 질문 키워드를 유지한다.
+
+첫 문장은 사용자의 핵심 검색 의도를 자연스럽게 정리한다.
+
+불필요한 요청 표현(추천해줘, 알려줘, 해줘)은 제거한다.
+
+예:
+입력:
+"경복궁 근처 데이트 코스 추천해줘"
+
+출력:
+"경복궁 근처 데이트 코스에 대해 찾아봤어요."
+절대로 검색된 장소명을 첫 문장에 사용하지 않는다.
+
+예:
+사용자:
+"경복궁 근처 데이트 코스"
+
+출력:
+"경복궁 근처 데이트 코스에 검색해봤어요."
+
+금지:
+"낙산 코스에 검색해봤어요."
 
 1. 관광지 설명은 제공된 관광지 데이터와 주민 후기를 기반으로 작성한다.
 
@@ -304,6 +421,7 @@ function askLocal(question, source) {
     source,
   );
   const q = question.toLowerCase();
+  const cleanQ = cleanQuestion(question);
 
   if (/(인기|요즘|트렌드|핫한|뜨는)/.test(q) && rankedPlaces.length === 0) {
     return {
@@ -347,10 +465,13 @@ function askLocal(question, source) {
     };
   }
 
-  if (rankedPlaces.length === 0 && rankedPosts.length === 0) {
-    return {
+if (
+  rankedPlaces.length === 0 &&
+  rankedPosts.length === 0 &&
+  rankedTips.length === 0
+) {    return {
       answer:
-        "현재 커뮤니티에는 관련 후기가 없어요.\nAI 기준으로 추천드리면 ...",
+`${question}와 관련된 등록 데이터가 아직 없어요.`,
 
       relatedPosts: [],
       relatedTips: [],
@@ -364,16 +485,52 @@ function askLocal(question, source) {
 
   const lines = [];
   const place = rankedPlaces[0];
+const isOnlyPlaceQuestion =
+ question.replace(/추천|알려줘|근처|주변|코스|데이트/g,"")
+ === place.name;
+
+  function cleanQuestion(question){
+
+ return question
+ .replace(
+ /추천해줘|알려줘|알려주세요|해주세요|추천|알려/g,
+ ""
+ )
+ .trim();
+
+}
 
   if (place) {
-   lines.push(
-`${place.name}에 검색해봤어요.`
-);
-    lines.push("");
-   if (place.description) {
-  lines.push(place.description);
+   const keywordText = question.trim();
+
+
+if (isOnlyPlaceQuestion) {
+
+  lines.push(
+    `${place.name}에 대해 찾아봤어요.`
+  );
+
+  if(place.description){
+    lines.push(place.description);
+  } else {
+    lines.push(
+      `${place.name} 관련 정보를 확인해봤어요.`
+    );
+  }
+
 } else {
-  lines.push("해당 장소에 대해 검색해봤어요.");
+
+  lines.push(
+    `${cleanQ}에 대해 찾아봤어요.`
+    
+  );
+
+  lines.push("");
+
+  lines.push(
+`${place.name} 주변에서 방문하기 좋은 장소를 중심으로 추천해드릴게요.`
+);
+
 }
   }
 
