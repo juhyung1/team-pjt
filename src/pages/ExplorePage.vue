@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import seoulData from '../data/seoul_attractions.json'
 
@@ -90,8 +90,77 @@ function selectGu(g) {
   selectedGu.value = g
   visibleCount.value = 24
 }
+// horizontal wheel-to-scroll for the chips bar + fade visibility
+const chipsEl = ref(null)
+const showLeftFade = ref(false)
+const showRightFade = ref(false)
 
-loadFav()
+function updateChipsFade() {
+  const el = chipsEl.value
+  if (!el) {
+    showLeftFade.value = false
+    showRightFade.value = false
+    return
+  }
+  const maxScroll = Math.max(0, el.scrollWidth - el.clientWidth)
+  // left fade when not at leftmost
+  showLeftFade.value = el.scrollLeft > 2
+  // right fade when not at rightmost (허용 오차 2px)
+  showRightFade.value = el.scrollLeft < (maxScroll - 2)
+}
+
+function handleChipsWheel(e) {
+  const el = chipsEl.value
+  if (!el) return
+  // 대부분의 마우스 휠 이벤트는 vertical deltaY가 들어옵니다.
+  const delta = e.deltaY || e.wheelDeltaY || 0
+  if (Math.abs(delta) < 0.5) return
+  el.scrollLeft += delta * 1.0
+  e.preventDefault()
+  requestAnimationFrame(updateChipsFade)
+}
+
+onMounted(() => {
+  const el = chipsEl.value
+  if (el) {
+    el.addEventListener('wheel', handleChipsWheel, { passive: false })
+    el.addEventListener('scroll', updateChipsFade, { passive: true })
+    updateChipsFade()
+  }
+  window.addEventListener('resize', updateChipsFade)
+})
+onBeforeUnmount(() => {
+  const el = chipsEl.value
+  if (el) {
+    el.removeEventListener('wheel', handleChipsWheel)
+    el.removeEventListener('scroll', updateChipsFade)
+  }
+  window.removeEventListener('resize', updateChipsFade)
+})
+
+function onChipsScroll() {
+  // called on native scroll event
+  updateChipsFade()
+}
+
+onMounted(() => {
+  const el = chipsEl.value
+  if (el) {
+    el.addEventListener('wheel', handleChipsWheel, { passive: false })
+    el.addEventListener('scroll', onChipsScroll, { passive: true })
+    updateChipsFade()
+  }
+  window.addEventListener('resize', updateChipsFade)
+})
+
+onBeforeUnmount(() => {
+  const el = chipsEl.value
+  if (el) {
+    el.removeEventListener('wheel', handleChipsWheel)
+    el.removeEventListener('scroll', onChipsScroll)
+  }
+  window.removeEventListener('resize', updateChipsFade)
+})
 </script>
 
 <template>
@@ -107,26 +176,50 @@ loadFav()
 
     <section class="controls" aria-label="장소 검색 및 자치구 필터">
       <input v-model="q" class="search" placeholder="장소명 또는 주소로 검색하세요" />
-      <div class="chips">
-        <button
-          type="button"
-          :class="['chip', 'chip-fav', { active: favOnly }]"
-          :aria-pressed="favOnly"
-          @click="toggleFavOnly"
-        >
-          ★ 즐겨찾기만
-        </button>
-        <span class="chip-divider" aria-hidden="true"></span>
-        <button
-          v-for="g in ['전체', ...guList]"
-          :key="g"
-          type="button"
-          :class="['chip', { active: g === selectedGu }]"
-          @click="selectGu(g)"
-        >
-          {{ g }}
-        </button>
-      </div>
+      <!-- chips 영역 전체를 이 블록으로 교체 -->
+<div class="chips-wrap">
+  <!-- 고정 즐겨찾기 (별 + 레이블, 항상 노란 별) -->
+  <button
+    type="button"
+    class="chip chip-fav-fixed"
+    :class="{ active: favOnly }"
+    :aria-pressed="favOnly"
+    @click="toggleFavOnly"
+    aria-label="즐겨찾기만 보기"
+  >
+    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M12 17.3l-6.16 3.64 1.18-6.88L2 9.9l6.92-1L12 2l3.08 6.9L22 9.9l-4.02 4.16 1.18 6.88L12 17.3z"
+        fill="#FBBF24"
+        stroke="#FBBF24"
+        stroke-width="1.2"
+      />
+    </svg>
+    <span class="chip-fav-label">즐겨찾기한 장소</span>
+  </button>
+
+  <!-- 스크롤 가능한 영역 (ref는 이 엘리먼트에 유지) -->
+  <div class="chips-scroll" ref="chipsEl" role="tablist" aria-label="자치구 선택">
+    <div class="chips">
+      <button
+        v-for="g in ['전체', ...guList]"
+        :key="g"
+        type="button"
+        :class="['chip', { active: g === selectedGu }]"
+        @click="selectGu(g)"
+      >
+        {{ g }}
+      </button>
+    </div>
+  </div>
+
+  <div v-show="showLeftFade" class="chips-fade left" aria-hidden="true">
+  <span class="chips-arrow">‹</span>
+</div>
+<div v-show="showRightFade" class="chips-fade right" aria-hidden="true">
+  <span class="chips-arrow">›</span>
+</div>
+</div>
     </section>
 
     <div v-if="visiblePlaces.length" class="grid">
@@ -228,18 +321,64 @@ loadFav()
   margin-bottom: 20px;
 }
 
-.search {
+input.search {
   min-height: 44px;
   padding: 10px 12px;
+  background: var(--color-muted-surface) !important;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  box-shadow: inset 0 1px 2px rgba(2,6,23,0.06);
+}
+/* wrapper: left fixed button + scroll area */
+/* wrapper: left fixed button + scroll area */
+.chips-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
+/* fixed favorite button: 텍스트 포함, 칩 높이와 정렬 일치, fades 위로 올라오지 않음 */
+.chip-fav-fixed {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px; /* 칩과 동일 높이 */
+  padding: 0 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-muted);
+  cursor: pointer;
+  font-weight: 700;
+  line-height: 1;
+  z-index: 10; /* fades보다 위에 표시 */
+}
+.chip-fav-fixed svg { display: block; }
+.chip-fav-label { display: inline-block; font-size: 0.95rem; }
+
+/* scroll container: fades의 positioning context (중요) */
+.chips-scroll {
+  position: relative; /* <- 여기 있어야 fades가 즐겨찾기 위로 나오지 않음 */
+  display: flex;
+  align-items: center; /* 즐겨찾기와 칩 수직 정렬 */
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 6px; /* 스크롤바 여백 */
+}
+
+/* internal chips row */
 .chips {
   display: flex;
   gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 2px;
+  align-items: center;
+  padding-left: 4px;
 }
 
+/* chip 버튼 높이 정렬 */
 .chip {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -247,28 +386,65 @@ loadFav()
   color: var(--color-muted);
   cursor: pointer;
   flex: 0 0 auto;
-  min-height: 36px;
+  height: 36px;
   padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 600;
 }
-
 .chip.active {
   background: var(--color-primary);
   border-color: var(--color-primary);
   color: #fff;
 }
 
-.chip-fav.active {
-  background: #b45309;
-  border-color: #b45309;
+/* fades (배경색 -> 투명) — 이제 chips-scroll 내부에 위치하므로 즐겨찾기 위에 없음 */
+.chips-fade {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 64px;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 6; /* chip-fav-fixed z-index 10 이므로 덮지 않음 */
+  transition: opacity 160ms ease;
+}
+.chips-fade.left {
+  left: 0;
+  background: linear-gradient(to right, var(--color-bg) 0%, rgba(248,250,252,0) 70%);
+}
+.chips-fade.right {
+  right: 0;
+  background: linear-gradient(to left, var(--color-bg) 0%, rgba(248,250,252,0) 70%);
 }
 
-.chip-divider {
-  align-self: center;
-  background: var(--color-border);
-  flex: 0 0 auto;
-  height: 20px;
-  width: 1px;
+/* 화살표: 원형 배경 없이 단독 표시 */
+.chips-arrow {
+  pointer-events: none;
+  color: rgba(15,23,36,0.55);
+  font-size: 20px;
+  line-height: 1;
 }
+
+/* 스크롤바는 chips-scroll 내부에서만 보이게 */
+.chips-scroll::-webkit-scrollbar { height: 6px; }
+.chips-scroll::-webkit-scrollbar-track { background: transparent; }
+.chips-scroll::-webkit-scrollbar-thumb {
+  background: rgba(15,23,36,0.12);
+  border-radius: 999px;
+}
+.chips-scroll { scrollbar-width: thin; scrollbar-color: rgba(15,23,36,0.12) transparent; }
+
+/* responsive */
+@media (max-width: 520px) {
+  .chip-fav-fixed { height: 36px; padding: 0 8px; }
+  .chip-fav-label { display: none; }
+  .chips-fade { width: 36px; }
+  .chips-arrow { font-size: 16px; }
+}
+
 
 .grid {
   display: grid;
