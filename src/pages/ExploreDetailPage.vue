@@ -75,7 +75,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import seoulData from '../data/seoul_attractions.json'
 
@@ -87,16 +87,44 @@ function loadPosts(){
   try{ const raw = localStorage.getItem('posts'); const parsed = raw? JSON.parse(raw): []; posts.value = Array.isArray(parsed)? parsed: [] }catch{ posts.value = [] }
 }
 
-onMounted(()=>{
+function loadPlace(){
+
   loadPosts()
+
   const id = route.params.id
-  const items = Array.isArray(seoulData?.items)? seoulData.items: []
-  // find by contentid (keep original title/contentid)
-  const found = items.find(i=> String(i.contentid) === String(id)) || null
-  place.value = found
-  // load favorites
-  try{ const raw = localStorage.getItem('favorites'); favorites.value = raw? JSON.parse(raw): [] }catch{ favorites.value = [] }
+
+  const items = Array.isArray(seoulData?.items)
+    ? seoulData.items
+    : []
+
+  const found = items.find(
+    i => String(i.contentid) === String(id)
+  )
+
+  place.value = found || null
+
+
+  try{
+    const raw = localStorage.getItem('favorites')
+    favorites.value = raw ? JSON.parse(raw) : []
+  }catch{
+    favorites.value=[]
+  }
+
+}
+
+
+onMounted(()=>{
+  loadPlace()
 })
+
+
+watch(
+  () => route.params.id,
+  () => {
+    loadPlace()
+  }
+)
 
 const relatedPosts = computed(()=>{
   if(!place.value) return []

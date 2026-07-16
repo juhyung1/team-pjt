@@ -11,7 +11,7 @@ const router = useRouter();
 const suggestions = [
   "성수동 후기 알려줘",
   "서울숲 주민 추천 있어?",
-  "요즘 인기 장소는?",
+  "지금 뜨는 장소는?",
 ];
 const showSuggestions = ref(true);
 
@@ -101,15 +101,30 @@ onBeforeUnmount(() => {
   bodyEl.value = null;
 });
 
-async function openPost(post) {
-  await router.push(`/board/${post.id}`);
+function openPost(post) {
+  isOpen.value = false;
+
+  router.push({
+    path: `/board/${post.id}`
+  });
 }
 
+
 function goWrite() {
-  router.push("/write");
+  isOpen.value = false;
+
+  router.push({
+    path: "/write"
+  });
 }
-async function openPlace(place) {
-  await router.push(`/explore/${place.id}`);
+
+
+function openPlace(place) {
+  isOpen.value = false;
+
+  router.push({
+    path: `/explore/${place.id}`
+  });
 }
 </script>
 

@@ -65,7 +65,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
@@ -108,32 +108,49 @@ function savePosts(list) {
   localStorage.setItem(postsKey, JSON.stringify(list))
 }
 
-function findAndSetPost() {
-  const id = route.params.id
-  const list = loadPosts()
-  const p = list.find((x) => String(x.id) === String(id))
-  post.value = p || null
-}
 
-onMounted(() => {
+
+function loadPost(){
+
   const id = route.params.id
   const list = loadPosts()
-  const idx = list.findIndex((x) => String(x.id) === String(id))
-  if (idx === -1) {
+
+  const idx = list.findIndex(
+    (x) => String(x.id) === String(id)
+  )
+
+  if(idx === -1){
     post.value = null
     return
   }
 
-  // increment views and persist
+
   list[idx].views = Number(list[idx].views || 0) + 1
-  // ensure likes field exists
   list[idx].likes = Number(list[idx].likes || 0)
+
+
   savePosts(list)
+
   post.value = list[idx]
 
-  // load liked ids and set
   likedIds.value = loadLiked()
+}
+
+
+onMounted(()=>{
+  loadPost()
 })
+
+
+watch(
+  () => route.params.id,
+  ()=>{
+    loadPost()
+  }
+)
+
+
+
 
 function formatDate(iso) {
   if (!iso) return ''
