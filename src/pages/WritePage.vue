@@ -12,6 +12,35 @@ const password = ref('')
 const placeName = ref('')
 const isResident = ref(false)
 
+const showSuggestions = ref(false)
+const showPlacePanel = ref(false)
+
+const sortedPlaces = computed(() => {
+  return [...places].sort((a, b) => {
+    const ta = String(a.title || '').trim()
+    const tb = String(b.title || '').trim()
+
+    const rank = (t) => {
+      if (!t) return 1
+      if (/^[0-9]/.test(t)) return 2
+      if (t.includes('서울둘레길') || t.includes('종로둘레길')) return 2
+      return 1
+    }
+
+    const ra = rank(ta)
+    const rb = rank(tb)
+    if (ra !== rb) return ra - rb
+
+    return ta.localeCompare(tb, 'ko')
+  })
+})
+
+const filteredPlaces = computed(() => {
+  const q = String(placeName.value || '').trim().toLowerCase()
+  if (!q) return []
+  return sortedPlaces.value.filter((p) => String(p.title || '').toLowerCase().includes(q))
+})
+
 const places = Array.isArray(seoulData?.items) ? seoulData.items : []
 const isEdit = computed(() => route.query?.edit != null)
 const editingId = computed(() => String(route.query.edit || ''))
@@ -175,6 +204,12 @@ function onSubmit() {
 function onCancel() {
   router.back()
 }
+
+function selectPlace(name) {
+  placeName.value = name
+  showSuggestions.value = false
+  showPlacePanel.value = false
+}
 </script>
 
 <template>
@@ -191,19 +226,52 @@ function onCancel() {
         <input id="post-title" v-model="title" class="input" type="text" placeholder="제목을 입력하세요" />
       </div>
 
-      <div class="form-row">
+      <div class="form-row place-row">
         <label class="label" for="post-place">연결 장소</label>
-        <input
-          id="post-place"
-          v-model="placeName"
-          class="input"
-          type="text"
-          list="place-options"
-          placeholder="예: 경복궁, 서울숲"
-        />
-        <datalist id="place-options">
-          <option v-for="place in places" :key="place.contentid" :value="place.title" />
-        </datalist>
+
+        <div class="place-input-area">
+          <input
+            id="post-place"
+            v-model="placeName"
+            class="input"
+            type="text"
+            placeholder="예: 경복궁, 서울숲"
+            @focus="showSuggestions = true"
+            @input="showSuggestions = true"
+          />
+
+          <button
+            type="button"
+            class="toggle-btn"
+            :aria-expanded="String(showPlacePanel)"
+            @click.prevent="showPlacePanel = !showPlacePanel"
+          >
+            ▾
+          </button>
+
+          <div v-if="filteredPlaces.length && showSuggestions" class="place-suggestions" role="list">
+            <div
+              v-for="place in filteredPlaces"
+              :key="place.contentid"
+              class="place-suggestion-item"
+              @mousedown.prevent="selectPlace(place.title)"
+            >
+              {{ place.title }}
+            </div>
+          </div>
+
+          <div v-if="showPlacePanel" class="place-list" role="list" aria-label="서울 장소 목록">
+            <div
+              v-for="place in (placeName ? filteredPlaces : sortedPlaces)"
+              :key="place.contentid"
+              class="place-item"
+              @mousedown.prevent="selectPlace(place.title)"
+            >
+              {{ place.title }}
+            </div>
+          </div>
+        </div>
+        
       </div>
 
       <div class="form-row">
@@ -325,5 +393,89 @@ function onCancel() {
   background: transparent;
   border: 1px solid var(--color-border);
   color: var(--color-muted);
+}
+
+.place-row {
+  position: relative;
+}
+
+.place-suggestions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  z-index: 20;
+  max-height: 180px;
+  overflow: auto;
+  box-shadow: 0 6px 18px rgba(18, 18, 18, 0.06);
+}
+
+.place-suggestion-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  border-bottom: 1px solid transparent;
+}
+
+.place-suggestion-item:hover {
+  background: var(--color-hover, #f6f6f6);
+}
+
+.place-input-area {
+  position: relative;
+}
+
+.place-input-area .input {
+  padding-right: 40px;
+}
+
+.toggle-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 28px;
+  width: 28px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: var(--color-muted);
+}
+
+.toggle-btn:hover {
+  background: var(--color-hover, #f6f6f6);
+}
+
+.place-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  width: 100%;
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  z-index: 30;
+  max-height: 300px; /* shows ~7 items depending on item height */
+  overflow: auto;
+  box-shadow: 0 8px 24px rgba(18, 18, 18, 0.08);
+}
+
+.place-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+}
+
+.place-item:hover {
+  background: var(--color-hover, #f6f6f6);
 }
 </style>
