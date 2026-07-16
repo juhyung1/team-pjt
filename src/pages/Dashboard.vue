@@ -33,9 +33,8 @@ const registeredPlacesCount = computed(() => {
 <template>
   <div>
     <header class="page-head">
-      <p class="eyebrow">선택 기능</p>
       <h1>지역 통계 대시보드</h1>
-      <p class="subtitle">localStorage에 저장된 서울 커뮤니티 게시글을 기준으로 활동 현황을 보여줍니다.</p>
+      <p class="subtitle">서울 커뮤니티 게시글을 기준으로 활동 현황을 보여줍니다.</p>
     </header>
 
     <section class="stats-row">
@@ -66,7 +65,7 @@ const registeredPlacesCount = computed(() => {
 </template>
 
 <style scoped>
-.page-head { margin-bottom: 16px }
+.page-head { margin: 24px 0 16px }
 h1 { margin: 0 0 6px }
 .eyebrow { color: var(--color-primary); font-size: 0.875rem; font-weight: 700; margin: 0 0 6px }
 .subtitle { color: var(--color-muted); margin: 0 }
