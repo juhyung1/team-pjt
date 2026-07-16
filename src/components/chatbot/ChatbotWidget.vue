@@ -13,7 +13,7 @@ const suggestions = [
   "서울숲 주민 추천 있어?",
   "요즘 인기 장소는?",
 ];
-
+const showSuggestions = ref(true);
 
 const messages = ref([
   {
@@ -31,8 +31,15 @@ async function submit(text) {
   console.log("submit");
   const message = (text ?? input.value).trim();
   if (!message) return;
+messages.value.push({
+  id: Date.now(),
+  role: "assistant",
+  content: "검색 중이에요..."
+});
 
   input.value = "";
+  showSuggestions.value = false;
+
   messages.value.push({
     id: Date.now(),
     role: "user",
@@ -48,7 +55,10 @@ async function submit(text) {
 
     const answer = await askChatbot(message, history);
 
-    messages.value.push({
+    messages.value = messages.value.filter(
+  (m) => m.content !== "검색 중이에요..."
+);
+messages.value.push({
       id: Date.now() + 1,
       role: "assistant",
       content:
@@ -130,40 +140,7 @@ async function openPlace(place) {
               {{ m.content.answer }}
             </p>
 
-            <!-- 추천 장소 -->
-
-            <div v-if="m.content.relatedPlaces?.length" class="related-section">
-              <p class="section-title">추천 장소</p>
-
-              <button
-                v-for="place in m.content.relatedPlaces"
-                :key="place.id"
-                class="post-chip"
-                @click="openPlace(place)"              >
-                {{ place.name }} 장소 보러가기
-              </button>
-            </div>
-
-            <!-- 관련 게시글 -->
-
-            <div v-if="m.content.relatedPosts?.length" class="related-section">
-              <p class="section-title">관련 커뮤니티 게시글</p>
-
-              <button
-                v-for="post in m.content.relatedPosts"
-                :key="post.id"
-                class="post-chip"
-                @click="openPost(post)"
-              >
-                {{ post.title }}
-
-                <br />
-
-                <small> 조회 {{ post.views ?? 0 }} </small>
-              </button>
-            </div>
-
-            <!-- 주민 후기 -->
+           <!-- 주민 후기 -->
 
             <div v-if="m.content.relatedTips?.length" class="related-section">
               <p class="section-title">지역 주민 TIP</p>
@@ -182,6 +159,42 @@ async function openPlace(place) {
                 </p>
               </div>
             </div>
+
+            <!-- 관련 게시글 -->
+
+            <div v-if="m.content.relatedPosts?.length" class="related-section">
+              <p class="section-title">관련 커뮤니티 게시글</p>
+
+              <button
+                <div
+   v-for="post in m.content.relatedPosts"
+  :key="post.id"
+  class="post-link"
+  @click="openPost(post)"
+>
+  <span class="post-title">
+    {{ post.title }}
+  </span>
+
+  <small class="post-view">
+    조회 {{ post.views ?? 0 }}
+  </small>
+              </button>
+            </div>
+  <!-- 추천 장소 -->
+
+            <div v-if="m.content.relatedPlaces?.length" class="related-section">
+              <p class="section-title">추천 장소</p>
+
+              <button
+                v-for="place in m.content.relatedPlaces"
+                :key="place.id"
+                class="place-chip"
+                @click="openPlace(place)"              >
+                {{ place.name }}
+              </button>
+            </div>
+           
 
             <!-- 커뮤니티 작성 유도 -->
 
@@ -207,8 +220,10 @@ async function openPlace(place) {
         </div>
       </div>
 
-      <div v-if="suggestions.length && !isLoading" class="chatbot__suggestions">
-        <button
+<div 
+v-if="showSuggestions && suggestions.length && !isLoading" 
+class="chatbot__suggestions"
+>        <button
           v-for="s in suggestions"
           :key="s"
           class="chip"
@@ -384,7 +399,7 @@ async function openPlace(place) {
 }
 
 .chatbot__msg--assistant {
-  background: #f1f5f9;
+  background: transparent;
 }
 
 .chatbot__msg--user {
@@ -476,8 +491,11 @@ async function openPlace(place) {
 }
 .chat-answer {
   line-height: 1.6;
+  background: #f1f5f9;
+  padding: 10px 12px;
+  border-radius: 12px;
+  margin: 0;
 }
-
 .related-section {
   margin-top: 14px;
 }
@@ -489,34 +507,121 @@ async function openPlace(place) {
   color: #334155;
 }
 
-.post-chip {
-  display: block;
+.place-chip {
+
+width:100%;
+
+padding:11px 16px;
+
+margin-bottom:8px;
+
+border-radius:12px;
+
+border:1px solid #e2e8f0;
+
+background:#ffffff;
+
+color:#334155;
+
+font-weight:600;
+
+font-size:14px;
+
+cursor:pointer;
+
+transition:
+
+transform .2s ease,
+
+box-shadow .2s ease,
+
+border-color .2s ease,
+
+background .2s ease;
+
+}
+
+
+.place-chip:hover {
+
+background:#f8fafc;
+
+border-color:#cbd5e1;
+
+transform:translateY(-2px);
+
+box-shadow:0 8px 20px rgba(15,23,42,.08);
+
+}
+
+
+.place-chip:active {
+
+transform:scale(.97);
+
+}
+
+.post-link {
   width: 100%;
-  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 
-  margin-bottom: 8px;
-
-  padding: 10px 12px;
+  padding: 8px 4px;
 
   border: none;
-  border-radius: 12px;
-  background:#2563eb;
-  color: white;
-font-weight:600;
+  outline: none;
+  background: transparent;
+
   cursor: pointer;
 
-  transition: 0.2s;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 600;
 
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  transition: color 0.2s ease, transform 0.2s ease;
+
+  appearance: none;
+  -webkit-appearance: none;
 }
 
-.post-chip:hover {
-background:#1d4ed8;
 
-  transform: translateY(3px);
-  box-shadow:0 6px 14px rgba(37,99,235,.25);
+.post-link:hover {
+  background: transparent;
+  border: none;
+  color: #2563eb;
+  transform: translateX(4px);
+}
+.post-title {
+
+color:#2563eb;
+
+text-decoration:underline;
 
 }
+
+
+.post-view {
+
+font-size:12px;
+
+color:#94a3b8;
+
+font-weight:400;
+
+}
+
+
+.post-link small {
+
+color:#64748b;
+
+font-size:12px;
+
+font-weight:400;
+
+}
+
 
 .tip-card {
   background: white;

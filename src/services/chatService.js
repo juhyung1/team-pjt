@@ -62,9 +62,9 @@ function loadCommunityPosts() {
 
 const DATA_SOURCE = {
   attractions: normalizeAttractions(seoulAttractions?.items || []),
+  posts: loadCommunityPosts(),
   tips: LOCAL_TIPS.map((tip) => ({ ...tip })),
 };
-
 function tokenize(text = "") {
   return text
     .toLowerCase()
@@ -109,14 +109,8 @@ function buildContext(question, source = {}) {
     ? source.attractions
     : DATA_SOURCE.attractions;
 
-<<<<<<< HEAD
   const posts = source.posts?.length ? source.posts : DATA_SOURCE.posts;
-=======
-  const posts =
-    source.posts?.length
-      ? source.posts
-      : loadCommunityPosts()
->>>>>>> 481b0dbafd0e6307e88188754fa4a408c59d5d79
+
 
   const tips = source.tips?.length ? source.tips : DATA_SOURCE.tips;
 
@@ -212,15 +206,9 @@ ${rankedPosts
       model: "gpt-4o-mini",
       messages: [
         {
-<<<<<<< HEAD
-          role: "system",
-          content: `
-너는 LocalHub AI 관광 도우미다.
-=======
           role: 'system',
          content: `
 너는 SeoulMate AI 관광 도우미다.
->>>>>>> 481b0dbafd0e6307e88188754fa4a408c59d5d79
 
 반드시 아래 데이터만 근거로 답변한다.
 
@@ -230,33 +218,24 @@ ${rankedPosts
 
 2. 주민 TIP은 제공된 relatedTips 데이터만 사용한다.
 새로운 주민 후기를 만들지 않는다.
+answer에는 주민 TIP 내용을 작성하지 않는다.
+주민 TIP은 relatedTips JSON 데이터에서만 표시한다.
 
 3. 커뮤니티 게시글은 제공된 커뮤니티 데이터만 사용한다.
 절대로 새로운 게시글 제목, 조회수, 작성자를 생성하지 않는다.
+정보가 부족할 경우 그냥 넘어간다.
 
 4. 추천이나 분석 의견은 AI 판단으로 작성 가능하지만,
 실제 후기/게시글처럼 표현하지 않는다.
 
 5. 관련 게시글이 없으면 "관련 게시글 없음"이라고 표시한다.
 
-6. 마지막에는 추가 질문 3개를 생성한다.
+6. answer는 설명 문장만 작성한다.
+관련 게시글, 주민TIP, 추천 장소 제목을 절대 포함하지 않는다.
+
+7. 게시글, 주민TIP, 장소는 반드시 JSON 데이터로 반환한다.
 
 JSON만 반환한다.
-
-{
- "answer":"...",
- "relatedPosts":[
-   {
-    "id":1
-   }
- ],
- "suggestions":[
-   "...",
-   "...",
-   "..."
- ]
-}
-
 
 데이터
 
@@ -285,21 +264,9 @@ ${contextText}
     const parsed = JSON.parse(clean);
      const ids = (parsed.relatedPosts ?? []).map(p => Number(p.id));
 
-<<<<<<< HEAD
     return {
       answer: parsed.answer,
-=======
-  if (!res.ok) throw new Error(`OpenAI API 오류: ${res.status}`)
-  const data = await res.json()
-  const content = data.choices?.[0]?.message?.content ?? ''
-  try {
-    const parsed = JSON.parse(content)
-    return String(parsed.answer ?? content)
-  } catch {
-    return content
-  }
-}
->>>>>>> 481b0dbafd0e6307e88188754fa4a408c59d5d79
+
 
       suggestions: parsed.suggestions ?? [],
 
@@ -341,13 +308,7 @@ function askLocal(question, source) {
   if (/(인기|요즘|트렌드|핫한|뜨는)/.test(q) && rankedPlaces.length === 0) {
     return {
       answer: [
-        "요즘 지역 커뮤니티에서 자주 언급되는 곳은 다음과 같아요.",
-        "",
-        "1. 서울숲 — 산책과 카페가 잘 어울리는 대표 공간",
-        "2. 성수동 — 최근 트렌드와 팝업이 많아 방문객이 많아요",
-        "3. 효사정 — 조용하고 감성적인 산책 코스로 인기가 높아요",
-        "",
-        "원하시면 “성수동 분위기”, “서울숲 추천 코스”, “효사정 가볼 만한 곳”처럼 더 구체적으로 물어봐 주세요.",
+        "요즘 지역 커뮤니티에서 자주 언급되는 곳은 다음과 같아요.",      
       ].join("\n"),
 
       relatedPosts: rankedPosts.slice(0, 3),
@@ -405,9 +366,9 @@ function askLocal(question, source) {
   const place = rankedPlaces[0];
 
   if (place) {
-    lines.push(
-      `${place.name} (${place.district} ${place.neighborhood})에 대해 알려드릴게요.`,
-    );
+   lines.push(
+`${place.name}에 검색해봤어요.`
+);
     lines.push("");
    if (place.description) {
   lines.push(place.description);
@@ -424,15 +385,15 @@ function askLocal(question, source) {
       .forEach((t) => lines.push(`- ${t.author}: "${t.content}"`));
   }
 
-  if (rankedPosts.length > 0) {
-    lines.push("");
-    lines.push("[관련 커뮤니티 게시글]");
-    rankedPosts
-      .slice(0, 3)
-      .forEach((p) => lines.push(`- ${p.title} (조회 ${p.views || 0})`));
-    lines.push("");
-    lines.push("원하시면 더 구체적인 추천이나 일정 형태로도 답해드릴게요!");
-  }
+  // if (rankedPosts.length > 0) {
+  //   lines.push("");
+  //   lines.push("[관련 커뮤니티 게시글]");
+  //   rankedPosts
+  //     .slice(0, 3)
+  //     .forEach((p) => lines.push(`- ${p.title} (조회 ${p.views || 0})`));
+  //   lines.push("");
+  //   lines.push("원하시면 더 구체적인 추천이나 일정 형태로도 답해드릴게요!");
+  // }
 
   return {
     answer: lines.join("\n"),
