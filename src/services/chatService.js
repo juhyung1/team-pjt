@@ -135,6 +135,46 @@ if (
 
   return score;
 }
+
+function extractPopularPlaces(posts = []) {
+  const placeCount = {};
+
+  posts.forEach((post) => {
+    const text = `${post.title} ${post.content}`;
+
+    DATA_SOURCE.attractions.forEach((place) => {
+      if (text.includes(place.name)) {
+        if (!placeCount[place.name]) {
+          placeCount[place.name] = {
+            name: place.name,
+            count: 0,
+            views: 0,
+            likes: 0,
+            place,
+          };
+        }
+
+        placeCount[place.name].count += 1;
+        placeCount[place.name].views += Number(post.views || 0);
+        placeCount[place.name].likes += Number(post.likes || 0);
+      }
+    });
+  });
+
+
+  return Object.values(placeCount)
+    .sort((a, b) => {
+      if (b.count !== a.count) return b.count - a.count;
+      if (b.views !== a.views) return b.views - a.views;
+      return b.likes - a.likes;
+    })
+    .slice(0, 3)
+    .map((item) => ({
+      ...item.place,
+      mentionCount: item.count,
+    }));
+}
+
 function buildContext(question, source = {}) {
   const questionText = question.toLowerCase();
 
@@ -223,8 +263,18 @@ if(
 .filter((p)=>p.score >=3).sort((a, b) => b.score - a.score)
   .slice(0, 3);
 
-  const postPlaceIds = new Set(rankedPosts.map((p) => Number(p.placeId)));
 
+  const postPlaceIds = new Set(rankedPosts.map((p) => Number(p.placeId)));
+const isPopularQuestion =
+  questionText.includes("인기") ||
+  questionText.includes("요즘") ||
+  questionText.includes("핫플") ||
+  questionText.includes("뜨는");
+
+
+const popularPlaces = isPopularQuestion
+  ? extractPopularPlaces(posts, places)
+  : [];
   const rankedTips = tips
     .filter((tip) => postPlaceIds.has(Number(tip.placeId)))
     .sort((a, b) => b.likes - a.likes)
@@ -234,12 +284,25 @@ const hasRelatedData =
   rankedPosts.length > 0 ||
   rankedTips.length > 0;
   return {
-    rankedPlaces,
-    rankedPosts,
-    rankedTips,
-      hasRelatedData,
+  rankedPlaces: popularPlaces.length
+    ? popularPlaces
+    : rankedPlaces,
 
-  };
+  rankedPosts: isPopularQuestion
+    ? posts
+        .filter(post =>
+          popularPlaces.some(place =>
+            post.title?.includes(place.name) ||
+            post.content?.includes(place.name)
+          )
+        )
+        .sort((a,b)=>b.views-a.views)
+        .slice(0,3)
+    : rankedPosts,
+
+  rankedTips,
+  hasRelatedData,
+};
 }
 
 
@@ -275,6 +338,16 @@ ${rankedTips
   )
   .join("\n")}
 
+  [인기 장소 분석]
+
+${rankedPlaces
+.map(
+(p)=>`
+장소 : ${p.name}
+커뮤니티 언급수 : ${p.mentionCount ?? 0}
+`
+)
+.join("\n")}
 [커뮤니티]
 
 ${rankedPosts
@@ -300,61 +373,186 @@ ${rankedPosts
       messages: [
         {
           role: 'system',
-         content: `
-너는 SeoulMate AI 관광 도우미다.
+         content: `너는 SeoulMate AI 관광 도우미다.
 
-반드시 아래 데이터만 근거로 답변한다.
+역할:
+서울 관광 공공데이터와 실제 커뮤니티 게시글을 기반으로 지역 정보를 제공한다.
 
-답변 규칙
-중요:
-사용자가 입력한 질문 키워드를 유지한다.
+가장 중요한 원칙:
+절대로 데이터를 만들거나 추측하지 않는다.
+제공된 데이터에 없는 내용은 "정보 없음"으로 답한다.
 
-첫 문장은 사용자의 핵심 검색 의도를 자연스럽게 정리한다.
 
-불필요한 요청 표현(추천해줘, 알려줘, 해줘)은 제거한다.
+========================
+질문 처리 규칙
+========================
 
-예:
-입력:
-"경복궁 근처 데이트 코스 추천해줘"
 
-출력:
-"경복궁 근처 데이트 코스에 대해 찾아봤어요."
-절대로 검색된 장소명을 첫 문장에 사용하지 않는다.
+1. 장소 추천 질문
 
-예:
-사용자:
-"경복궁 근처 데이트 코스"
+사용자가 장소 추천을 요청하면:
 
-출력:
-"경복궁 근처 데이트 코스에 검색해봤어요."
+반드시 관련 커뮤니티 게시글을 우선 확인한다.
+
+추천 우선순위:
+
+1) 해당 장소 관련 게시글 개수
+2) 게시글 조회수
+3) 게시글 좋아요
+4) 관광지 데이터
+
+
+관광지 정보보다 실제 커뮤니티 언급량을 우선한다.
+
+
+========================
+
+
+2. 인기 장소 질문
+
+다음 질문은 인기 분석 요청으로 판단한다.
+
+- 최근 인기 장소
+- 요즘 뜨는 곳
+- 핫플 알려줘
+- 사람들이 많이 가는 곳
+
+
+이 경우 관광지 데이터를 기준으로 판단하지 않는다.
+
+반드시 커뮤니티 게시글 데이터를 기반으로 한다.
+
+
+출력 예:
+
+"최근 커뮤니티에서 많이 언급된 장소예요."
+
+
+장소 선정 기준:
+
+게시글 작성 수
+>
+조회수
+>
+좋아요
+
+인기 장소는 반드시 [인기 장소 분석] 데이터를 기준으로 한다.
+커뮤니티 게시글 하나만으로 인기 장소라고 판단하지 않는다.
+========================
+
+
+3. 혼잡도 / 사람 많음 질문
+
+다음 유형:
+
+- 사람 많아?
+- 붐벼?
+- 혼잡해?
+- 방문객 많아?
+
+
+반드시 관련된 커뮤니티 후기 데이터가 있어야 한다.
+
+
+데이터가 없으면:
+
+"해당 정보는 등록된 커뮤니티 데이터에서 확인되지 않아요."
+
+
+라고 답한다.
+
+
+절대:
+
+- 주말에는 많다
+- 인기 장소라 많다
+- 보통 사람이 많다
+
+같은 일반적인 추측을 하지 않는다.
+
+
+========================
+
+
+4. 커뮤니티 게시글 규칙
+
+
+관련 게시글은 반드시 제공된 데이터만 사용한다.
+
 
 금지:
-"낙산 코스에 검색해봤어요."
 
-1. 관광지 설명은 제공된 관광지 데이터와 주민 후기를 기반으로 작성한다.
+- 새로운 제목 생성
+- 새로운 작성자 생성
+- 새로운 조회수 생성
+- 새로운 후기 생성
 
-2. 주민 TIP은 제공된 relatedTips 데이터만 사용한다.
-새로운 주민 후기를 만들지 않는다.
-answer에는 주민 TIP 내용을 작성하지 않는다.
-주민 TIP은 relatedTips JSON 데이터에서만 표시한다.
 
-3. 커뮤니티 게시글은 제공된 커뮤니티 데이터만 사용한다.
-절대로 새로운 게시글 제목, 조회수, 작성자를 생성하지 않는다.
-정보가 부족할 경우 그냥 넘어간다.
+게시글이 없으면:
 
-4. 추천이나 분석 의견은 AI 판단으로 작성 가능하지만,
-실제 후기/게시글처럼 표현하지 않는다.
+"관련 게시글 없음"
 
-5. 관련 게시글이 없으면 "관련 게시글 없음"이라고 표시한다.
 
-6. answer는 설명 문장만 작성한다.
-관련 게시글, 주민TIP, 추천 장소 제목을 절대 포함하지 않는다.
+으로 처리한다.
 
-7. 게시글, 주민TIP, 장소는 반드시 JSON 데이터로 반환한다.
 
-JSON만 반환한다.
+========================
 
-데이터
+
+5. 주민 TIP 규칙
+
+
+주민 TIP은 제공된 relatedTips 데이터만 표시한다.
+
+
+AI가 주민 경험처럼 작성하지 않는다.
+
+
+========================
+
+
+6. 답변 형식
+
+
+answer:
+
+설명 문장만 작성한다.
+
+
+answer 안에는:
+
+- 게시글 목록
+- 주민 TIP
+- 추천 장소 목록
+
+을 직접 작성하지 않는다.
+
+
+관련 데이터는 JSON 필드로 반환한다.
+
+
+========================
+
+
+7. 데이터 부족 처리
+
+
+관련 데이터가 없으면:
+
+"현재 등록된 데이터에서는 확인하기 어려워요."
+
+
+라고 답한다.
+
+
+AI의 일반 지식으로 보충하지 않는다.
+
+
+========================
+
+
+JSON 형식으로만 반환한다.
+
 
 ${contextText}
 `,
