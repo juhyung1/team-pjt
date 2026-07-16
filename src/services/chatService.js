@@ -45,9 +45,23 @@ function normalizeAttractions(items = []) {
     });
 }
 
+/** localStorage의 실제 커뮤니티 게시글 — 없으면 시드 게시글로 대체 */
+function loadCommunityPosts() {
+  try {
+    const raw = localStorage.getItem('posts')
+    const parsed = raw ? JSON.parse(raw) : []
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      // 비밀번호는 챗봇 컨텍스트에 포함하지 않는다
+      return parsed.map(({ password, ...rest }) => ({ ...rest }))
+    }
+  } catch {
+    /* ignore */
+  }
+  return SEED_POSTS.map((post) => ({ ...post }))
+}
+
 const DATA_SOURCE = {
   attractions: normalizeAttractions(seoulAttractions?.items || []),
-  posts: SEED_POSTS.map((post) => ({ ...post })),
   tips: LOCAL_TIPS.map((tip) => ({ ...tip })),
 };
 
@@ -95,7 +109,14 @@ function buildContext(question, source = {}) {
     ? source.attractions
     : DATA_SOURCE.attractions;
 
+<<<<<<< HEAD
   const posts = source.posts?.length ? source.posts : DATA_SOURCE.posts;
+=======
+  const posts =
+    source.posts?.length
+      ? source.posts
+      : loadCommunityPosts()
+>>>>>>> 481b0dbafd0e6307e88188754fa4a408c59d5d79
 
   const tips = source.tips?.length ? source.tips : DATA_SOURCE.tips;
 
@@ -191,9 +212,15 @@ ${rankedPosts
       model: "gpt-4o-mini",
       messages: [
         {
+<<<<<<< HEAD
           role: "system",
           content: `
 너는 LocalHub AI 관광 도우미다.
+=======
+          role: 'system',
+         content: `
+너는 SeoulMate AI 관광 도우미다.
+>>>>>>> 481b0dbafd0e6307e88188754fa4a408c59d5d79
 
 반드시 아래 데이터만 근거로 답변한다.
 
@@ -241,6 +268,7 @@ ${contextText}
       ],
       temperature: 0.7,
       max_tokens: 600,
+      response_format: { type: 'json_object' },
     }),
   });
 
@@ -257,8 +285,21 @@ ${contextText}
     const parsed = JSON.parse(clean);
      const ids = (parsed.relatedPosts ?? []).map(p => Number(p.id));
 
+<<<<<<< HEAD
     return {
       answer: parsed.answer,
+=======
+  if (!res.ok) throw new Error(`OpenAI API 오류: ${res.status}`)
+  const data = await res.json()
+  const content = data.choices?.[0]?.message?.content ?? ''
+  try {
+    const parsed = JSON.parse(content)
+    return String(parsed.answer ?? content)
+  } catch {
+    return content
+  }
+}
+>>>>>>> 481b0dbafd0e6307e88188754fa4a408c59d5d79
 
       suggestions: parsed.suggestions ?? [],
 
@@ -403,7 +444,10 @@ function askLocal(question, source) {
   };
 }
 
-/** 챗봇 진입점 — API 키 유무에 따라 자동 분기 */
+/**
+ * 챗봇 진입점 — API 키 유무에 따라 자동 분기
+ * 반환 타입은 화면 출력이 안전하도록 항상 문자열로 통일한다.
+ */
 export async function askChatbot(question, history = [], source = {}) {
   const trimmed = (question || "").trim();
   if (!trimmed) {

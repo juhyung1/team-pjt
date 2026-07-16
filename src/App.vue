@@ -6,11 +6,9 @@
         <span class="logo-text">SeoulMate</span>
       </router-link>
       <nav class="nav">
-        <router-link to="/explore" class="nav-link">장소</router-link>
-        <router-link to="/favorites" class="nav-link">즐겨찾기</router-link>
-        <router-link to="/board" class="nav-link">게시판</router-link>
-        <router-link to="/write" class="nav-link">글쓰기</router-link>
-        <router-link to="/community" class="nav-link">DashBoard</router-link>
+        <router-link to="/explore" class="nav-link">서울 장소</router-link>
+        <router-link to="/board" class="nav-link">커뮤니티</router-link>
+        <router-link to="/dashboard" class="nav-link">지역 통계</router-link>
       </nav>
     </div>
   </header>
@@ -24,15 +22,16 @@
   <WriteFab />
   <footer class="app-footer">
     <div class="container">
-      © {new Date().getFullYear()} SeoulMate — 서울 지역 정보 공유 커뮤니티
+      © {{ currentYear }} SeoulMate - 서울 지역 정보 공유 커뮤니티
     </div>
   </footer>
 </template>
 
 <script setup>
-/* no script logic required for static header/navigation */
 import ChatbotWidget from "./components/chatbot/ChatbotWidget.vue";
 import WriteFab from "./components/WriteFab.vue";
+
+const currentYear = new Date().getFullYear();
 </script>
 
 <style scoped>
@@ -42,7 +41,7 @@ import WriteFab from "./components/WriteFab.vue";
   z-index: 50;
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
-  height: 64px;
+  min-height: 64px;
   display: flex;
   align-items: center;
 }
@@ -58,8 +57,9 @@ main {
 .header-inner {
   display: flex;
   align-items: center;
-  justify-content: flex-start; /* keep logo and nav together with consistent gap */
-  height: 64px;
+  justify-content: space-between;
+  min-height: 64px;
+  gap: var(--space-2);
 }
 
 /* Logo */
@@ -69,6 +69,7 @@ main {
   gap: 8px;
   text-decoration: none;
   margin-right: var(--space-3);
+  flex: 0 0 auto;
 }
 .logo-img {
   height: 28px;
@@ -86,6 +87,8 @@ main {
   display: flex;
   gap: var(--space-2, 16px);
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .nav-link {
@@ -112,12 +115,21 @@ main {
 
 /* small responsive tweak */
 @media (max-width: 640px) {
+  .header-inner {
+    align-items: flex-start;
+    flex-direction: column;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
   .logo {
     font-size: 1rem;
+    margin-right: 0;
   }
   .nav {
     gap: var(--space-1, 8px);
+    justify-content: flex-start;
   }
+  .nav-link { padding: 6px 8px; }
 }
 
 .app-footer {

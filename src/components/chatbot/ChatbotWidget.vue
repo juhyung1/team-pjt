@@ -14,11 +14,12 @@ const suggestions = [
   "요즘 인기 장소는?",
 ];
 
+
 const messages = ref([
   {
     id: 1,
-    role: "assistant",
-    content: "안녕하세요! SeoulMate 도우미예요. 😊",
+    role: 'assistant',
+    content: '안녕하세요! SeoulMate 지역 도우미예요. 😊\n서울 관광지·주민 팁·커뮤니티 글을 기반으로 답해드려요.',
   },
 ]);
 
@@ -62,14 +63,15 @@ async function submit(text) {
               suggestions: [],
             },
     });
+
   } catch (error) {
     console.error(error);
 
     messages.value.push({
       id: Date.now() + 1,
-      role: "assistant",
-      content: "답변 생성 중 문제가 발생했어요.",
-    });
+      role: 'assistant',
+      content: '답변 생성 중 문제가 발생했어요. 잠시 후 다시 시도해주세요.',
+    })
   } finally {
     isLoading.value = false;
   }
@@ -107,9 +109,9 @@ async function openPlace(place) {
       <header class="chatbot__header">
         <div>
           <p class="chatbot__title">SeoulMate 도우미</p>
-          <p class="chatbot__subtitle">공공데이터 + 주민 후기 기반</p>
+          <p class="chatbot__subtitle">서울 공공데이터 · 커뮤니티 기반 답변</p>
         </div>
-        <button class="chatbot__close" @click="toggle">✕</button>
+        <button class="chatbot__close" type="button" aria-label="챗봇 닫기" @click="toggle">✕</button>
       </header>
 
       <div ref="bodyEl" class="chatbot__body">
@@ -205,7 +207,7 @@ async function openPlace(place) {
         </div>
       </div>
 
-      <div v-if="messages.length <= 1" class="chatbot__suggestions">
+      <div v-if="suggestions.length && !isLoading" class="chatbot__suggestions">
         <button
           v-for="s in suggestions"
           :key="s"
@@ -223,6 +225,7 @@ async function openPlace(place) {
           placeholder="메시지를 입력하세요"
         />
         <button type="submit" class="btn">전송</button>
+
       </form>
     </section>
 
@@ -286,13 +289,16 @@ async function openPlace(place) {
   color: #fff;
   cursor: pointer;
   font-size: 22px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   box-shadow: var(--shadow-lg);
   transition:
     transform var(--duration-fast) var(--ease-out),
     background var(--duration-fast) var(--ease-out);
+
 }
+
 
 .chatbot__fab:hover {
   transform: scale(1.06);
@@ -329,6 +335,7 @@ async function openPlace(place) {
   flex-direction: column;
 
   background: #fff;
+
   border-radius: 16px;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.16);
 
@@ -337,12 +344,24 @@ async function openPlace(place) {
 
   animation: panel-up 0.2s ease;
 }
+
 .chatbot__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 12px 14px;
   border-bottom: 1px solid var(--color-border);
+}
+
+.chatbot__title {
+  font-weight: 800;
+  margin: 0;
+}
+
+.chatbot__subtitle {
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  margin: 2px 0 0;
 }
 
 .chatbot__body {
