@@ -89,12 +89,15 @@ onBeforeUnmount(() => {
   bodyEl.value = null;
 });
 
-function openPost(post) {
-  router.push(`/board/${post.id}`);
+async function openPost(post) {
+  await router.push(`/board/${post.id}`);
 }
 
 function goWrite() {
   router.push("/write");
+}
+async function openPlace(place) {
+  await router.push(`/explore/${place.id}`);
 }
 </script>
 
@@ -134,8 +137,7 @@ function goWrite() {
                 v-for="place in m.content.relatedPlaces"
                 :key="place.id"
                 class="post-chip"
-                @click="router.push(`/explore/${place.id}`)"
-              >
+                @click="openPlace(place)"              >
                 {{ place.name }} 장소 보러가기
               </button>
             </div>
@@ -478,10 +480,10 @@ function goWrite() {
   padding: 10px 12px;
 
   border: none;
-  border-radius: 10px;
-
-  background: #ffffff;
-
+  border-radius: 12px;
+  background:#2563eb;
+  color: white;
+font-weight:600;
   cursor: pointer;
 
   transition: 0.2s;
@@ -490,9 +492,11 @@ function goWrite() {
 }
 
 .post-chip:hover {
-  background: #eff6ff;
+background:#1d4ed8;
 
-  transform: translateX(3px);
+  transform: translateY(3px);
+  box-shadow:0 6px 14px rgba(37,99,235,.25);
+
 }
 
 .tip-card {

@@ -255,15 +255,17 @@ ${contextText}
       .trim();
 
     const parsed = JSON.parse(clean);
+     const ids = (parsed.relatedPosts ?? []).map(p => Number(p.id));
 
     return {
       answer: parsed.answer,
 
       suggestions: parsed.suggestions ?? [],
 
-      relatedPosts: rankedPosts.filter((post) =>
-        (parsed.relatedPosts ?? []).includes(post.id),
-      ),
+
+relatedPosts: rankedPosts.filter(post =>
+    ids.includes(Number(post.id))
+),
 
       relatedTips: rankedTips,
 
@@ -366,10 +368,11 @@ function askLocal(question, source) {
       `${place.name} (${place.district} ${place.neighborhood})에 대해 알려드릴게요.`,
     );
     lines.push("");
-    lines.push(place.description || "해당 장소에 대한 설명이 준비되어 있어요.");
-    lines.push(
-      `🕐 ${place.hours || "정보 확인 필요"} · 💰 ${place.fee || "정보 확인 필요"}`,
-    );
+   if (place.description) {
+  lines.push(place.description);
+} else {
+  lines.push("해당 장소에 대해 검색해봤어요.");
+}
   }
 
   if (rankedTips.length > 0) {
